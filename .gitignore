@@ -25,7 +25,8 @@ ENV/
 
 # ─── Dataset (too large for Git) ─────────────────────────────────────────────
 data/raw/
-data/processed/
+data/processed/*
+!data/processed/*.png
 *.npy
 *.npz
 *.h5

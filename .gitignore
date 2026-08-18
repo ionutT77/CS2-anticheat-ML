@@ -1,0 +1,65 @@
+# =============================================================================
+# CS2 ML Anti-Cheat — .gitignore
+# =============================================================================
+
+# ─── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# ─── Virtual Environment ─────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+ENV/
+
+# ─── Jupyter Notebooks ──────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ─── Dataset (too large for Git) ─────────────────────────────────────────────
+data/raw/
+data/processed/
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.parquet
+*.csv
+!requirements.txt
+
+# ─── Model Checkpoints & Outputs ─────────────────────────────────────────────
+models/checkpoints/
+models/saved/
+*.pt
+*.pth
+*.onnx
+runs/
+logs/
+
+# ─── IDE & OS ────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# ─── PyTorch / TensorBoard ───────────────────────────────────────────────────
+lightning_logs/
+tensorboard_logs/
+wandb/
+
+# ─── Misc ────────────────────────────────────────────────────────────────────
+*.log
+*.tmp
+.env
+.env.local

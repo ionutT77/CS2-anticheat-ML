@@ -195,6 +195,143 @@ Input (192 ticks × 5 features)
 
 ---
 
+### Entry 8 — Input Feature Documentation
+**Date:** 2026-08-21  
+**What was done:**
+- Documented the physical meaning, anti-cheat significance, and concrete examples for all 5 input features in the Kaggle CSGO Cheating Dataset.
+- This entry serves as the **data dictionary** for the thesis — explaining exactly what the neural network "sees" at each timestep.
+
+**Context:** In CS:GO/CS2, a player's view direction is defined by two angles:
+- **Yaw** — horizontal rotation (looking left ↔ right), range roughly [−180°, +180°]
+- **Pitch** — vertical rotation (looking up ↔ down), range roughly [−90°, +90°]
+
+The dataset captures 192 ticks (≈6 seconds at 32 tick rate) around each engagement: 5 seconds before the kill and 1 second after. The 5 features at each tick are:
+
+#### Feature 1: `AttackerDeltaYaw` (float32)
+- **What it is:** The *change* in horizontal view angle (left/right) between this tick and the previous tick. Measures the horizontal speed and direction of mouse movement at that instant.
+- **Units:** Degrees per tick
+- **Anti-cheat significance:** Aimbots produce unnatural spikes — snapping to a target's horizontal position in a single tick. Human mouse movements show gradual acceleration, peak speed, and deceleration. A cheater might produce a `+15.0°` spike in one tick (instantaneous snap), while a human flick might take 5–10 ticks to cover the same angle.
+- **Examples:**
+  - `0.0` — player is holding their mouse perfectly still (no horizontal movement)
+  - `+2.5` — player flicked their mouse to the right (fast movement)
+  - `-0.2` — player is slowly turning left (gentle tracking)
+  - `+18.3` — suspicious single-tick snap to the right (potential aimbot)
+
+#### Feature 2: `AttackerDeltaPitch` (float32)
+- **What it is:** The *change* in vertical view angle (up/down) between this tick and the previous tick. Measures the vertical speed and direction of mouse movement.
+- **Units:** Degrees per tick
+- **Anti-cheat significance:** Critical for recoil control analysis. Weapons like the AK-47 kick upward when spraying — players must pull their mouse downward to compensate. Human recoil control is messy and reactive. A cheat can pull the pitch down with mathematical perfection to counter the weapon's exact recoil pattern, producing unnaturally smooth negative DeltaPitch values during sprays.
+- **Examples:**
+  - `0.0` — no vertical mouse movement
+  - `+0.5` — player is looking up (or compensating for downward recoil)
+  - `-0.6` — player is pulling their aim downward (recoil compensation during a spray)
+  - `-12.7` — large single-tick vertical snap (potential aimbot snapping to head level)
+
+#### Feature 3: `CrosshairToVictimYaw` (float32)
+- **What it is:** The horizontal angular distance between the center of the attacker's crosshair and the victim (measured to the victim's center of mass or head).
+- **Units:** Degrees
+- **Anti-cheat significance:** Measures how horizontally aligned the player is with their target over time. An aimbot causes this value to instantly or smoothly collapse to `0.0` and stay there. A human player overshoots, corrects, and oscillates near `0.0`. The *rate of convergence* to zero is the key aimbot signal.
+- **Examples:**
+  - `+15.0` — enemy is 15° to the right of the crosshair (not aiming at them yet)
+  - `+4.2` → `+0.5` → `-0.1` — human flick with slight overshoot
+  - `0.0` — crosshair is perfectly aligned horizontally with the enemy
+  - `+12.0` → `0.0` in one tick — aimbot snap (physically impossible for a human)
+
+#### Feature 4: `CrosshairToVictimPitch` (float32)
+- **What it is:** The vertical angular distance between the center of the attacker's crosshair and the victim.
+- **Units:** Degrees
+- **Anti-cheat significance:** Measures vertical accuracy. Especially useful for detecting "bone aimbots" that lock perfectly onto a specific vertical bone (like the head). A headshot aimbot will maintain `CrosshairToVictimPitch ≈ 0.0` with inhuman precision while the victim is moving (crouching, jumping).
+- **Examples:**
+  - `+3.0` — crosshair is 3° below the enemy's head (aiming at their legs/torso)
+  - `0.0` — crosshair is perfectly aligned vertically with the target
+  - `-1.2` — crosshair is slightly above the target
+  - Values jumping from `+5.0` to `0.0` in one tick — vertical aimbot snap
+
+#### Feature 5: `Firing` (float32, binary: 0.0 or 1.0)
+- **What it is:** A binary flag indicating whether the player's weapon is actively shooting on this specific tick.
+- **Anti-cheat significance:** This is the most critical *context* variable. It tells the model *when* the engagement is happening. Combined with the crosshair-to-victim distances, it enables **triggerbot detection**: a triggerbot fires the instant `CrosshairToVictimYaw` and `CrosshairToVictimPitch` both reach `0.0`, with zero human reaction delay. Legitimate players have a measurable reaction time (typically 150–250ms) between their crosshair aligning and their trigger pull.
+- **Examples:**
+  - `0.0` — not shooting (running, aiming, waiting)
+  - `1.0` — weapon is firing on this tick
+
+**How the 5 features work together for detection:**
+
+| Pattern | DeltaYaw/Pitch | CrosshairToVictim | Firing | Interpretation |
+|---------|---------------|-------------------|--------|---------------|
+| **Human kill** | Gradual ramp over 5–10 ticks | Slowly converges to ~0, oscillates | Fires after 150–250ms delay | Normal engagement |
+| **Aimbot snap** | Single massive spike (1 tick) | Instantly jumps to 0.0 | Fires immediately after snap | Aimbot signature |
+| **Triggerbot** | Normal-looking movement | Reaches ~0 naturally | Fires on exact tick of alignment (0ms delay) | Triggerbot signature |
+| **Aimbot + Triggerbot** | Spike + instant fire | Snaps to 0.0 | Fires same tick as snap | Combined cheat |
+
+**Output:** This journal entry (data dictionary for thesis Chapter 3: Methodology)
+
+---
+
+### Entry 9 — ML Pipeline Build (Dataset, LSTM, Training, Evaluation)
+**Date:** 2026-08-21  
+**What was done:**
+- Built the complete Phase 1 ML pipeline — all source modules under `src/`:
+  1. `src/data/dataset.py` — Data loading, player-level splitting, normalization, PyTorch Dataset
+  2. `src/models/lstm_detector.py` — 2-layer LSTM aimbot detector (120,897 parameters)
+  3. `src/training/trainer.py` — Training loop with early stopping, checkpointing, LR scheduling
+  4. `src/evaluation/metrics.py` — Metrics, plots, player-level aggregation
+- Generated `notebooks/02_lstm_training.ipynb` — the training and evaluation notebook
+
+**Key design decisions made:**
+
+1. **Engagement-level classification (not player-level):**
+   - Each engagement `(192, 5)` is one sample → 360,000 training samples instead of 12,000
+   - A player is flagged as cheater ONLY if multiple engagements (configurable `min_flagged` threshold) are classified as cheating — one suspicious shot doesn't make a cheater
+   - Tested thresholds: 1, 2, 3, 5, 8, 10, 15 out of 30 engagements
+
+2. **Player-level data splitting (no leakage):**
+   - All 30 engagements from one player stay in the same split (train/val/test)
+   - Stratified split preserves the 5:1 class ratio across splits
+   - Split: 70% train, 15% validation, 15% test
+
+3. **Global z-score normalization:**
+   - Mean/std computed from training set ONLY (prevents test data leaking into normalization)
+   - Applied to 4 continuous features; `Firing` (binary) left untouched
+   - Stats saved for consistent normalization at inference time
+
+4. **Class imbalance handling (dual approach):**
+   - `WeightedRandomSampler` in the DataLoader → each epoch sees roughly equal cheater/legit samples
+   - `pos_weight=5.0` in BCE loss → cheater misclassifications penalized 5x more
+   - Belt-and-suspenders: ensures the model doesn't just predict "legit" for everything
+
+5. **Training configuration:**
+   - Optimizer: Adam (lr=1e-3)
+   - LR Scheduler: ReduceLROnPlateau (halve LR after 5 stale epochs)
+   - Early Stopping: patience=10 epochs
+   - Gradient Clipping: max_norm=1.0 (prevents exploding gradients in LSTMs)
+   - Max epochs: 50
+
+6. **Anti-cheat-specific evaluation:**
+   - FPR @ 95% Recall = "how many legit players get wrongly banned to catch 95% of cheaters"
+   - Player-level verdict with configurable `min_flagged` threshold
+   - Full report: ROC curve, PR curve, confusion matrix, training history
+
+**Model architecture (120,897 parameters):**
+```
+Input:   (batch, 192, 5)
+LSTM 1:  5 -> 128 hidden
+Dropout: 0.3
+LSTM 2:  128 -> 64 hidden
+FC:      64 -> 32 -> 1
+Output:  Sigmoid -> P(cheater)
+```
+
+**Output files:**
+- `src/data/__init__.py`, `src/data/dataset.py`
+- `src/models/__init__.py`, `src/models/lstm_detector.py`
+- `src/training/__init__.py`, `src/training/trainer.py`
+- `src/evaluation/__init__.py`, `src/evaluation/metrics.py`
+- `notebooks/generate_02_notebook.py`, `notebooks/02_lstm_training.ipynb`
+
+**Next step:** Open `02_lstm_training.ipynb` in Jupyter and run all cells to train the model.
+
+---
+
 ## Phase 2: CS2 Server Integration
 
 > *Entries will be added when Phase 1 is complete*

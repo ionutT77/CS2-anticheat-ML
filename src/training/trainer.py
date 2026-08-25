@@ -14,6 +14,7 @@ import time
 import numpy as np
 import torch
 import torch.nn as nn
+from tqdm.auto import tqdm
 from sklearn.metrics import (
     accuracy_score, f1_score, roc_auc_score, precision_score, recall_score,
 )
@@ -80,7 +81,6 @@ class Trainer:
             mode="min",
             factor=0.5,
             patience=5,
-            verbose=True,
         )
 
         # Early stopping
@@ -127,13 +127,20 @@ class Trainer:
 
         return loss_per_sample.mean()
 
-    def train_one_epoch(self, train_loader):
+    def train_one_epoch(self, train_loader, epoch, n_epochs):
         """Train for one epoch, return average loss."""
         self.model.train()
         total_loss = 0.0
         n_batches = 0
 
-        for batch_x, batch_y in train_loader:
+        pbar = tqdm(
+            train_loader,
+            desc=f"Epoch {epoch:3d}/{n_epochs} [train]",
+            unit="batch",
+            leave=False,
+        )
+
+        for batch_x, batch_y in pbar:
             batch_x = batch_x.to(self.device)
             batch_y = batch_y.to(self.device)
 
@@ -153,10 +160,13 @@ class Trainer:
             total_loss += loss.item()
             n_batches += 1
 
+            # Live loss in the progress bar suffix
+            pbar.set_postfix(loss=f"{total_loss / n_batches:.4f}")
+
         return total_loss / n_batches
 
     @torch.no_grad()
-    def evaluate(self, loader):
+    def evaluate(self, loader, desc="val"):
         """
         Evaluate model on a DataLoader.
 
@@ -175,7 +185,9 @@ class Trainer:
         total_loss = 0.0
         n_batches = 0
 
-        for batch_x, batch_y in loader:
+        pbar = tqdm(loader, desc=f"           [{desc}]", unit="batch", leave=False)
+
+        for batch_x, batch_y in pbar:
             batch_x = batch_x.to(self.device)
             batch_y = batch_y.to(self.device)
 
@@ -187,6 +199,8 @@ class Trainer:
 
             all_probs.append(predictions.cpu().numpy())
             all_labels.append(batch_y.cpu().numpy())
+
+            pbar.set_postfix(loss=f"{total_loss / n_batches:.4f}")
 
         all_probs = np.concatenate(all_probs)
         all_labels = np.concatenate(all_labels)
@@ -229,10 +243,10 @@ class Trainer:
             t0 = time.time()
 
             # ── Train ──────────────────────────────────────────────────
-            train_loss = self.train_one_epoch(train_loader)
+            train_loss = self.train_one_epoch(train_loader, epoch, n_epochs)
 
             # ── Validate ───────────────────────────────────────────────
-            val_metrics, _, _ = self.evaluate(val_loader)
+            val_metrics, _, _ = self.evaluate(val_loader, desc="val")
             val_loss = val_metrics["loss"]
 
             # ── LR scheduler step ──────────────────────────────────────

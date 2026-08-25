@@ -332,6 +332,97 @@ Output:  Sigmoid -> P(cheater)
 
 ---
 
+### Entry 10 — First Training Runs & Kaggle Migration
+**Date:** 2026-08-25
+**What was done:**
+
+#### Bugs fixed
+1. **`ReduceLROnPlateau` — `verbose=True` removed**
+   - PyTorch 2.2+ removed the `verbose` parameter. Removed it from `trainer.py`.
+   - LR changes are still visible because the epoch log prints `LR: x.xe-xx` every epoch.
+
+2. **`tqdm` progress bars added to Trainer**
+   - Local training on CPU was taking 5–10 min/epoch with no visible progress.
+   - Added `tqdm.auto` progress bars to both `train_one_epoch` and `evaluate`, showing per-batch progress and running loss.
+   - `tqdm>=4.65.0` added to `requirements.txt`.
+
+3. **DataLoader teardown errors on Kaggle (`num_workers=2` → `0`)**
+   - `_MultiProcessingDataLoaderIter.__del__` spam when running with `num_workers=2` inside a Jupyter notebook.
+   - Root cause: multiprocessing workers lose their parent PID reference on notebook cell teardown.
+   - Fix: `num_workers=0` (single-process). No speed impact since data is already in RAM.
+
+#### Kaggle migration
+- Local CPU training was estimated at 5–10 min/epoch × 50 epochs = ~8 hours.
+- Migrated to Kaggle Notebooks with free Tesla T4 GPU → **~27s/epoch**.
+- Created `notebooks/kaggle_training.py` — a single self-contained script with all `src/` logic inlined, no dependencies on the local project structure.
+- Batch size increased from 256 (CPU) to 512 (GPU) to saturate the T4.
+- Dataset path: `/kaggle/input/datasets/emstatsl/csgo-cheating-dataset/cheaters/cheaters.npy` and `.../legit/legit.npy`
+
+#### Training Run 1 — Baseline (pos_weight=5.0, dropout=0.3, lr=1e-3)
+| Metric | Value |
+|---|---|
+| Best epoch | 13 |
+| Test Loss | 1.2525 |
+| Test Accuracy | 0.481 |
+| Test Precision | 0.219 |
+| Test Recall | 0.823 |
+| Test F1 | 0.346 |
+| Test AUC | 0.718 |
+
+**Analysis:** High recall (model flags almost everything as cheater) but very low precision (3 in 4 flags are innocent). `pos_weight=5.0` was double-compensating — `WeightedRandomSampler` already balances the class frequencies, so an additional 5× loss weight made the model over-predict cheaters. Val loss oscillating heavily, suggesting LR was too high.
+
+#### Training Run 2 — Lower pos_weight + Regularization (pos_weight=2.0, dropout=0.4, lr=1e-3, weight_decay=1e-4)
+| Metric | Value |
+|---|---|
+| Best epoch | 12 |
+| Test Loss | 0.8003 |
+| Test Accuracy | 0.591 |
+| Test Precision | 0.249 |
+| Test Recall | 0.723 |
+| Test F1 | 0.371 |
+| Test AUC | 0.715 |
+
+**Analysis:** Better precision/recall balance. Train ≈ Val loss — regularization worked, no significant overfitting. Val loss still oscillating. AUC essentially unchanged at ~0.71.
+
+#### Training Run 3 — Stable LR (pos_weight=2.0, dropout=0.4, lr=5e-4, weight_decay=1e-4)
+| Metric | Value |
+|---|---|
+| Best epoch | 15 |
+| Test Loss | 0.8419 |
+| Test Accuracy | 0.572 |
+| Test Precision | 0.243 |
+| Test Recall | 0.744 |
+| Test F1 | 0.367 |
+| Test AUC | 0.713 |
+
+**Analysis:** Val loss curve is smooth and stable (lower LR worked for stability). LR scheduler stepped down twice (5e-4 → 2.5e-4 → 1.3e-4). AUC still plateaued at ~0.71.
+
+#### Key finding: AUC ceiling at ~0.72
+After three runs with significantly different hyperparameters, AUC remained at 0.71–0.72. This indicates the bottleneck is **not** training configuration — it is the **features themselves**. The 5 raw mouse-delta features have an information ceiling that no amount of regularization or LR tuning can overcome.
+
+**What AUC = 0.71 means:** If you pick one random cheater and one random legit player, the model ranks the cheater as more suspicious 71% of the time. Random = 50%. The model is learning real signal, but not enough for reliable deployment.
+
+#### Model viability assessment
+| Context | Verdict |
+|---|---|
+| Thesis proof-of-concept | ✅ Demonstrates ML anti-cheat is feasible |
+| Academic analysis / writing | ✅ AUC ceiling is itself a valid finding |
+| Real deployment (bans) | ❌ Precision 0.25 = 75% false positive rate |
+| Flag-for-manual-review | ⚠️ Possible, if a human reviews every flag |
+
+#### What needs to improve (next steps)
+1. **Feature engineering** — raw mouse deltas are insufficient. Need:
+   - Aim snap speed (degrees per tick, max snap angle)
+   - Time-to-headshot after target appears
+   - Pre-fire detection (trigger before crosshair alignment)
+   - Per-engagement headshot rate
+2. **Player-level aggregation at inference** — aggregate model scores across all 30 engagements per player before making a verdict, rather than per-engagement classification.
+3. **Self-attention over LSTM output** — instead of taking only the last hidden state, apply attention so the model can focus on the most anomalous ticks in the sequence.
+
+---
+
+
+
 ## Phase 2: CS2 Server Integration
 
 > *Entries will be added when Phase 1 is complete*

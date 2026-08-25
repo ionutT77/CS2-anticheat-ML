@@ -29,15 +29,16 @@ from tqdm.auto import tqdm
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 
 # !! Change this to match your Kaggle dataset input path !!
-DATA_DIR = "/kaggle/input/csgo-cheating-dataset"   # folder with cheaters.npy & legit.npy
-OUTPUT_DIR = "/kaggle/working"                      # Kaggle output — files here are downloadable
+DATA_DIR = "/kaggle/input/datasets/emstatsl/csgo-cheating-dataset"   # folder with cheaters.npy & legit.npy
+OUTPUT_DIR = "/kaggle/working/"                      # Kaggle output — files here are downloadable
 
 BATCH_SIZE  = 512     # Larger batches work better on GPU (256 was for CPU)
 N_EPOCHS    = 50
-LR          = 1e-3
-POS_WEIGHT  = 5.0     # 5:1 class imbalance compensation
+LR          = 5e-4
+POS_WEIGHT  = 2.0     # 5:1 class imbalance compensation
 PATIENCE    = 10      # Early stopping patience (epochs)
 SEED        = 42
+DROPOUT = 0.4
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {DEVICE}")
@@ -56,8 +57,8 @@ BINARY_FEATURES     = [4]
 # =============================================================================
 
 def load_raw_data(data_dir):
-    cheaters = np.load(os.path.join(data_dir, "cheaters.npy"))  # (2000, 30, 192, 5)
-    legit    = np.load(os.path.join(data_dir, "legit.npy"))     # (10000, 30, 192, 5)
+    cheaters = np.load(os.path.join(data_dir, "cheaters/cheaters.npy"))  # (2000, 30, 192, 5)
+    legit    = np.load(os.path.join(data_dir, "legit/legit.npy"))     # (10000, 30, 192, 5)
     print(f"Loaded cheaters: {cheaters.shape}  legit: {legit.shape}")
 
     data   = np.concatenate([cheaters, legit], axis=0)
@@ -165,7 +166,7 @@ def get_dataloaders(data_dir, batch_size=512, seed=42, num_workers=2):
 
 class LSTMAimbotDetector(nn.Module):
     def __init__(self, input_size=5, hidden_size_1=128, hidden_size_2=64,
-                 fc_size=32, dropout=0.3):
+                 fc_size=32, dropout=DROPOUT):
         super().__init__()
         self.lstm1      = nn.LSTM(input_size, hidden_size_1, batch_first=True, num_layers=1)
         self.dropout1   = nn.Dropout(dropout)
@@ -200,8 +201,8 @@ class Trainer:
         self.model     = model.to(device)
         self.pos_weight = pos_weight
         self.criterion  = nn.BCELoss(reduction="none")
-        self.optimizer  = torch.optim.Adam(model.parameters(), lr=lr)
-        self.scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        self.optimizer  = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4) #added weight decay to prevent overfitting
+        self.scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(  # if the model memorizes data, this weight_decay shrinks every weight towards 0, forcing it to generalize
             self.optimizer, mode="min", factor=0.5, patience=5)
         self.patience          = patience
         self.best_val_loss     = float("inf")
@@ -335,7 +336,7 @@ if __name__ == "__main__" or True:   # "or True" makes it run in a notebook cell
         data_dir=DATA_DIR,
         batch_size=BATCH_SIZE,
         seed=SEED,
-        num_workers=2,          # Kaggle supports workers (unlike Windows)
+        num_workers=0,          # Kaggle supports workers (unlike Windows)
     )
 
     # 2. Model

@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "dataset": "CS2CD/CS2CD.Counter-Strike_2_Cheat_Detection",
+  "revision": "44e5129654508b22802a050a45bcdbb44b103d87",
+  "decision_unit": "player within one match, with at least one eligible encounter",
+  "window": "256 consecutive ticks ending strictly before first bullet damage in a two-second attacker/victim burst",
+  "labels": "publisher player-match labels; not verified per-event cheat activation",
+  "features": [
+    "delta_yaw",
+    "delta_pitch",
+    "target_error_yaw",
+    "target_error_pitch",
+    "shot",
+    "yaw_acceleration",
+    "pitch_acceleration",
+    "target_yaw_rate",
+    "target_pitch_rate",
+    "distance",
+    "relative_height",
+    "attacker_speed",
+    "victim_speed",
+    "closing_speed",
+    "lateral_speed",
+    "attacker_vertical_speed",
+    "victim_vertical_speed",
+    "scoped",
+    "crouch",
+    "airborne",
+    "flash_remaining",
+    "health",
+    "armor",
+    "recoil_index",
+    "punch_pitch",
+    "punch_yaw",
+    "shots_in_burst",
+    "ammo",
+    "time_since_shot",
+    "victim_shot",
+    "victim_footstep",
+    "time_since_victim_noise",
+    "victim_crouch",
+    "victim_health",
+    "weapon_auto",
+    "weapon_sniper",
+    "weapon_pistol",
+    "weapon_smg",
+    "weapon_shotgun"
+  ],
+  "feature_count": 39,
+  "excluded_inputs": [
+    "source folder",
+    "map",
+    "rank",
+    "server",
+    "player ID",
+    "absolute tick",
+    "kill outcome",
+    "future ticks",
+    "usercmd mouse fields",
+    "spotted flags"
+  ],
+  "identity_limit": "Source anonymization reassigns Player_N separately per DEM; true player-disjointness cannot be verified.",
+  "split": "60/15/10/15 percent by match-connected group, stratified on presence of a positive label",
+  "duplicate_grouping": "Exact full hurt-event signatures and 32-event subsequences, relative ticks, IDs omitted; plus extracted exact-window checks before training",
+  "primary_selection": "Mean of validation player-match ROC-AUC on all eligible players and on manually-reviewed matches only; ties within 0.001 resolved by reviewed-cohort AUC then fewer parameters",
+  "models_planned": [
+    "five-channel LSTM",
+    "39-channel LSTM",
+    "39-channel temporal CNN",
+    "39-channel patch Transformer",
+    "hierarchical CNN with chronological encounter Transformer",
+    "LightGBM player summaries leaves15/31",
+    "five-channel LightGBM ablation",
+    "39-channel TCN trained only on manually-reviewed matches"
+  ],
+  "neural_training": {
+    "epochs": 40,
+    "patience": 8,
+    "seeds": [
+      42,
+      123
+    ],
+    "optimizer": "AdamW",
+    "lr": 0.0005,
+    "weight_decay": 0.001,
+    "loss": "unweighted player-match BCE; sampled encounter bags; optional event auxiliary BCE 0.25",
+    "training_bag_size": 16,
+    "evaluation_bag": "all eligible encounters"
+  },
+  "ensemble_selection": "Top neural and top tree blend weights 0,0.25,0.5,0.75,1 using the same validation mean AUC criterion only",
+  "calibration": "positive-slope Platt on calibration; thresholds for accuracy, 1% and 0.1% observed calibration FPR, precision99% exploratory",
+  "test": "single frozen evaluation after selection/calibration; cluster bootstrap by match group; all-cohort and manually-reviewed-cohort results",
+  "horizons": "complete match primary; first 1,5,10 encounters supplementary without retuning thresholds",
+  "coverage": "Report players excluded for zero eligible encounters; no performance claim for miss-only/no-damage players",
+  "claims": "Research benchmark only. No new-player, future-time, unseen-cheat-family or 99% deployment claim.",
+  "match_split_sha256": "ec2d9e60a6c359b9ba735e9fa3b12c5a1214d88b66b39dbcfb203a6ea04563fb",
+  "extraction_source_sha256": "08043b1a02b606a447ee1dce9b10bdb4ed01187ac3cc0526e54addee18692387",
+  "exact_signature_duplicate_groups": [],
+  "connected_groups": 795,
+  "counts": {
+    "calibration": {
+      "matches": 79,
+      "positive_player_labels": 118
+    },
+    "test": {
+      "matches": 120,
+      "positive_player_labels": 219
+    },
+    "train": {
+      "matches": 477,
+      "positive_player_labels": 762
+    },
+    "validation": {
+      "matches": 119,
+      "positive_player_labels": 210
+    }
+  },
+  "pretraining_amendment": "Before any training or model metrics: add within-reviewed-cohort selection and reviewed-only training ablation. Reason: every positive label originates in reviewed matches, making collection source a shortcut."
+}

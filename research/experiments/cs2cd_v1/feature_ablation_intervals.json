@@ -1,0 +1,35 @@
+{
+  "all": {
+    "lstm39_minus_lstm5": {
+      "auc_difference": 0.01340652165041012,
+      "ci95": [
+        -0.010146091960557293,
+        0.03962627146099505
+      ]
+    },
+    "lgbm39_leaves15_minus_lgbm5_leaves15": {
+      "auc_difference": 0.026481451250867427,
+      "ci95": [
+        0.013829624397929905,
+        0.04204567419602193
+      ]
+    }
+  },
+  "reviewed_only": {
+    "lstm39_minus_lstm5": {
+      "auc_difference": 0.02949623888762265,
+      "ci95": [
+        0.0007526159205522411,
+        0.06158089764087594
+      ]
+    },
+    "lgbm39_leaves15_minus_lgbm5_leaves15": {
+      "auc_difference": 0.033280145885571044,
+      "ci95": [
+        0.01274449828136632,
+        0.059842660070111575
+      ]
+    }
+  },
+  "note": "Supplementary paired analysis of preregistered feature ablations; no new fitting, selection or threshold changes."
+}

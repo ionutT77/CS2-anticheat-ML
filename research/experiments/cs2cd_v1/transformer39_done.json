@@ -1,0 +1,15 @@
+{
+  "config": {
+    "name": "transformer39",
+    "architecture": "transformer",
+    "channels": 39,
+    "seed": 42
+  },
+  "best_epoch": 20,
+  "epochs": 28,
+  "selection_score": 0.9306284842033572,
+  "reviewed_auc": 0.9346458108594031,
+  "seconds": 24.366384744644165,
+  "parameters": 269249,
+  "train_players": 4523
+}

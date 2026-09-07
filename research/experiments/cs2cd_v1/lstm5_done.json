@@ -1,0 +1,15 @@
+{
+  "config": {
+    "name": "lstm5",
+    "architecture": "lstm",
+    "channels": 5,
+    "seed": 42
+  },
+  "best_epoch": 32,
+  "epochs": 40,
+  "selection_score": 0.9081779208965282,
+  "reviewed_auc": 0.9053847536857246,
+  "seconds": 34.79845571517944,
+  "parameters": 120897,
+  "train_players": 4523
+}

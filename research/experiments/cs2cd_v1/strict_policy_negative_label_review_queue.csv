@@ -1,0 +1,5 @@
+match_id,player,source,map,label,encounters,selected,calibrated_score,tcn39_seed123,lgbm39_leaves15
+no_cheater_present/84,Player_10,no_cheater_present,cs_office,0,15,0.9376681642213642,0.910693505069421,0.99238515,0.7735172098792313
+no_cheater_present/84,Player_8,no_cheater_present,cs_office,0,29,0.926953722946549,0.8994715332312616,0.93822724,0.8931331233688377
+no_cheater_present/64,Player_9,no_cheater_present,de_train,0,10,0.9240375423692052,0.8964931499255087,0.9716635,0.7811597443669572
+no_cheater_present/84,Player_7,no_cheater_present,cs_office,0,23,0.8800083620465294,0.8544438308640088,0.8818451,0.8744979791309418

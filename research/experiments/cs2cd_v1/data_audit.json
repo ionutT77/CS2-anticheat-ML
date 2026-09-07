@@ -1,0 +1,128 @@
+{
+  "raw_rows": 734975247,
+  "matches": 795,
+  "features": [
+    "delta_yaw",
+    "delta_pitch",
+    "target_error_yaw",
+    "target_error_pitch",
+    "shot",
+    "yaw_acceleration",
+    "pitch_acceleration",
+    "target_yaw_rate",
+    "target_pitch_rate",
+    "distance",
+    "relative_height",
+    "attacker_speed",
+    "victim_speed",
+    "closing_speed",
+    "lateral_speed",
+    "attacker_vertical_speed",
+    "victim_vertical_speed",
+    "scoped",
+    "crouch",
+    "airborne",
+    "flash_remaining",
+    "health",
+    "armor",
+    "recoil_index",
+    "punch_pitch",
+    "punch_yaw",
+    "shots_in_burst",
+    "ammo",
+    "time_since_shot",
+    "victim_shot",
+    "victim_footstep",
+    "time_since_victim_noise",
+    "victim_crouch",
+    "victim_health",
+    "weapon_auto",
+    "weapon_sniper",
+    "weapon_pistol",
+    "weapon_smg",
+    "weapon_shotgun"
+  ],
+  "encounters": 141633,
+  "players": 7949,
+  "eligible_players": 7508,
+  "rejected_encounters": {
+    "team_damage": 4297,
+    "round_boundary": 241,
+    "missing_tick": 576,
+    "nonfinite_feature": 3
+  },
+  "null_fraction": {
+    "tick": 0.0,
+    "steamid": 0.0,
+    "pitch": 0.01714419506157872,
+    "yaw": 0.01714419506157872,
+    "X": 0.01714419506157872,
+    "Y": 0.01714419506157872,
+    "Z": 0.01714419506157872,
+    "velocity_X": 0.01716571415363598,
+    "velocity_Y": 0.01716571415363598,
+    "velocity_Z": 0.01716571415363598,
+    "is_alive": 0.0,
+    "is_warmup_period": 0.0,
+    "team_num": 0.01714419506157872,
+    "total_rounds_played": 0.0,
+    "is_scoped": 0.01714419506157872,
+    "duck_amount": 0.01714419506157872,
+    "is_airborne": 0.0,
+    "health": 0.01714419506157872,
+    "armor_value": 0.01714419506157872,
+    "fl_recoil_idx": 0.2883028304217162,
+    "aim_punch_angle": 0.01714419506157872,
+    "shots_fired": 0.01714419506157872,
+    "active_weapon_ammo": 0.2883028304217162,
+    "active_weapon_name": 0.2883040495103912
+  },
+  "unused_field_null_fraction": {
+    "i_recoil_idx": 0.2883040495103912,
+    "flash_duration": 0.01714419506157872,
+    "usercmd_mouse_dy": 0.01767208086669074,
+    "velocity": 0.01716571415363598,
+    "usercmd_viewangle_x": 0.0176899603803936,
+    "usercmd_mouse_dx": 0.01767208086669074
+  },
+  "exact_duplicate_windows": 0,
+  "cross_split_exact_duplicates": 0,
+  "split_counts": {
+    "calibration": {
+      "encounters": 14360,
+      "positives": 2261,
+      "players": 743,
+      "matches": 79
+    },
+    "test": {
+      "encounters": 21172,
+      "positives": 3197,
+      "players": 1130,
+      "matches": 120
+    },
+    "train": {
+      "encounters": 86022,
+      "positives": 14041,
+      "players": 4523,
+      "matches": 477
+    },
+    "validation": {
+      "encounters": 20079,
+      "positives": 3330,
+      "players": 1112,
+      "matches": 118
+    }
+  },
+  "coverage_by_label": {
+    "0": {
+      "size": 6640,
+      "<lambda_0>": 6214
+    },
+    "1": {
+      "size": 1309,
+      "<lambda_0>": 1294
+    }
+  },
+  "events_sha256": "4163bb4c030f50243c8a7d70b91bf91ff3afab13f763e04f1ad94d02096f5d27",
+  "players_sha256": "602430523a0c3ff3d5f65d535be95c565b87b4c5cb4647e7f3cde5ef399e01ab"
+}

@@ -1,0 +1,33 @@
+{
+  "model": "cnn_seed42_raw5",
+  "seconds": 106.34207780100405,
+  "best_epoch": 16,
+  "parameters": 180018,
+  "config": {
+    "kind": "cnn",
+    "seed": 42,
+    "epochs": 35,
+    "patience": 9,
+    "batch_size": 24,
+    "width": 48,
+    "lr": 0.0007,
+    "weight_decay": 0.03,
+    "tag": "raw5",
+    "ema": false,
+    "fp32": false,
+    "raw_five": true
+  },
+  "validation": {
+    "roc_auc": 0.8586626297937866,
+    "average_precision": 0.6438301044779371,
+    "partial_auc_1pct": 0.60017119536547,
+    "roc_recall_at_1pct_fpr": 0.2849740932642487
+  },
+  "train": {
+    "roc_auc": 0.9115419645647758,
+    "average_precision": 0.7774426953631189,
+    "partial_auc_1pct": 0.6524786280990826,
+    "roc_recall_at_1pct_fpr": 0.4351851851851852
+  },
+  "torch_version": "2.9.0"
+}

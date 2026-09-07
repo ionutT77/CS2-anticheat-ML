@@ -1,0 +1,25 @@
+# Keep the small, frozen research artifacts in version control.
+!**/*.csv
+!**/*.pt
+!**/*.npz
+!**/*.npy
+!experiments/cs2cd_v1/events.parquet
+!data/processed/
+!data/processed/splits.csv
+!data/processed/feature_names.json
+!data/processed/overlap_duplicate_edges.npy
+!data/raw/
+data/raw/*
+!data/raw/download_manifest.json
+
+# Downloads and generated training caches stay local.
+data/cs2cd/raw/
+data/cs2cd/windows/
+data/cs2cd/processed/
+data/processed/*.npy
+!data/processed/overlap_duplicate_edges.npy
+outputs/
+__pycache__/
+*.pyc
+*.part
+*.log

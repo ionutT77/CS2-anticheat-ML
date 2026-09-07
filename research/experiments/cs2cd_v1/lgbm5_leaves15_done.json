@@ -1,0 +1,12 @@
+{
+  "name": "lgbm5_leaves15",
+  "channels": 5,
+  "leaves": 15,
+  "best_iteration": 381,
+  "all_auc": 0.9238999978567908,
+  "reviewed_auc": 0.9302633944624236,
+  "selection_score": 0.9270816961596071,
+  "average_precision": 0.7001970618452168,
+  "seconds": 1.575897455215454,
+  "feature_count": 210
+}

@@ -1,0 +1,16 @@
+{
+  "config": {
+    "name": "hierarchical39",
+    "architecture": "tcn",
+    "channels": 39,
+    "seed": 42,
+    "hierarchical": true
+  },
+  "best_epoch": 5,
+  "epochs": 13,
+  "selection_score": 0.9315299715905709,
+  "reviewed_auc": 0.9431409564904711,
+  "seconds": 35.04808163642883,
+  "parameters": 323042,
+  "train_players": 4523
+}

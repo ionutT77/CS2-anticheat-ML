@@ -1,0 +1,89 @@
+{
+  "started_utc": "2026-09-07T08:32:27.733400+00:00",
+  "reference_commit": "06427ceabd9990a8bc278b21758e1b04aa9d46f7",
+  "architecture": "5 -> LSTM128 -> dropout -> LSTM64 -> last state -> FC32/ReLU/dropout -> FC1/sigmoid",
+  "parameters": 120897,
+  "configs": [
+    {
+      "name": "reference_recipe",
+      "normalization": "zscore",
+      "balanced_sampler": true,
+      "positive_weight": 2.0,
+      "seed": 42,
+      "selection": "validation_weighted_loss",
+      "dropout": 0.4,
+      "lr": 0.0005,
+      "weight_decay": 0.0001,
+      "epochs": 50,
+      "patience": 10,
+      "batch_size": 512
+    },
+    {
+      "name": "natural_zscore",
+      "normalization": "zscore",
+      "balanced_sampler": false,
+      "positive_weight": 1.0,
+      "seed": 42,
+      "selection": "validation_engagement_auc",
+      "dropout": 0.4,
+      "lr": 0.0005,
+      "weight_decay": 0.0001,
+      "epochs": 50,
+      "patience": 10,
+      "batch_size": 512
+    },
+    {
+      "name": "natural_asinh",
+      "normalization": "asinh",
+      "balanced_sampler": false,
+      "positive_weight": 1.0,
+      "seed": 42,
+      "selection": "validation_engagement_auc",
+      "dropout": 0.4,
+      "lr": 0.0005,
+      "weight_decay": 0.0001,
+      "epochs": 50,
+      "patience": 10,
+      "batch_size": 512
+    },
+    {
+      "name": "natural_asinh_seed123",
+      "normalization": "asinh",
+      "balanced_sampler": false,
+      "positive_weight": 1.0,
+      "seed": 123,
+      "selection": "validation_engagement_auc",
+      "dropout": 0.4,
+      "lr": 0.0005,
+      "weight_decay": 0.0001,
+      "epochs": 50,
+      "patience": 10,
+      "batch_size": 512
+    }
+  ],
+  "selection": "One corrected model by validation engagement ROC-AUC. Per-model player pooling chosen among mean, logitmean, top10 by validation player ROC-AUC. No ensembles.",
+  "calibration": "Separate existing calibration split, natural prevalence, positive-slope Platt calibration, thresholds chosen here only.",
+  "test_status": "Supplementary evaluation on the previously reported benchmark test set, not a new untouched holdout. No supplementary test scores used for new model selection.",
+  "reference_status": "Published architecture and latest training recipe reimplemented on our overlap-grouped split; not an exact reproduction of journal metrics.",
+  "precision": "FP32 inputs and storage; training-time cuDNN TF32 allowed; restored checkpoint inference uses IEEE cuDNN FP32 for batch-size consistency. No AMP or FP16 cache.",
+  "torch_version": "2.9.0",
+  "original_artifact_hashes": {
+    "models/cnn_seed42.pt": "273cedbd4caf7dc5a1ad69dd5b43d044521b338ad6d4b913d7802842dd163ee7",
+    "models/cnn_seed42_raw5.pt": "e2c94ab8f9b4a4139ffcf8274687d6d2ff5b6424448db660314fe6eea35dfd34",
+    "data/processed/splits.csv": "2cfd94b06e9c5db4ac7f2d4e16b2df636beca5d467da9d1c058466f6da226b63",
+    "data/processed/feature_names.json": "8137964cba6dda8f7435cccdca26c0498a4e9552c31ce701764e09daa7dfc6e0",
+    "reports/protocol.md": "05bbac6be2114ce30477c7c7e94cf314a26b88b5ab876ecd70d8f58e8f0609b9",
+    "anticheat/features.py": "4068fb059efe64c598c12c7e997d21d0fd9992a0aeb1979f47bad0006addaef1",
+    "anticheat/neural.py": "3429b4468205d6ff99aa6a165404ac2ae31440183ec30574037cee4a673b2d35",
+    "anticheat/inference.py": "24eb377d352bc1e4940976b12a76db98392834faf6b78180b1405dfefbd51460",
+    "data/raw/download_manifest.json": "a1afb03c0df79e576e4f1ef1514b2597c8a8d7a9be94cd7b89ff43697bf4dfc1",
+    "results/test_metrics.json": "7656eb79fe11e039aed1f04bb356983990ff9ae489a89c835003ea85f498c0e0",
+    "results/test_predictions.csv": "68a0c7aad1a7e47451e933b766789adb565512056185e4e672e27700d19f5724"
+  },
+  "supplement_source_hashes": {
+    "scripts/improve_reference_lstm.py": "000259a4eeda27bc547f96e268c79a4cd7c376db629dc00535aa8eb88599fad8",
+    "anticheat/reference_lstm.py": "ea4bef6af6a296433fe099b87a03dfbad25ce2abacb7bfe8c794f0e682f8f2ac"
+  },
+  "inference_precision_amendment": "See preserved initial protocol and inference_precision_check.json; numerical inference fix after training, before calibration/test. All candidate configurations and trained weights retained.",
+  "source_hash_scope": "Hashes identify the distributed files. Trained weights, splits and numerical predictions are unchanged."
+}

@@ -1,0 +1,16 @@
+{
+  "window_ticks": 64,
+  "shift_stride": 1,
+  "input_channels": [
+    0,
+    1,
+    4
+  ],
+  "minimum_active_ticks": 24,
+  "minimum_changed_ticks": 24,
+  "minimum_distinct_angle_pairs": 16,
+  "verified_record_edges": 4407,
+  "candidate_comparisons": 4414,
+  "seconds": 87.46932312900026,
+  "method": "64-tick rolling hash at every offset, exact float equality verification; adjacent equal-hash records are connected transitively."
+}

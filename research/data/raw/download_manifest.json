@@ -1,0 +1,20 @@
+{
+  "dataset": "emstatsl/csgo-cheating-dataset",
+  "version": 1,
+  "source_url": "https://www.kaggle.com/api/v1/datasets/download/emstatsl/csgo-cheating-dataset?datasetVersionNumber=1",
+  "archive": "data/raw/csgo-cheating-dataset-v1.zip",
+  "sha256": "09cc914e7201f65cfb38972fb6398199d1ac266bf0c8deea24128cf7b6d3f0db",
+  "archive_bytes": 482951432,
+  "files": [
+    {
+      "name": "cheaters/cheaters.npy",
+      "bytes": 230400128,
+      "crc32": 800780985
+    },
+    {
+      "name": "legit/legit.npy",
+      "bytes": 1152000128,
+      "crc32": 924837133
+    }
+  ]
+}

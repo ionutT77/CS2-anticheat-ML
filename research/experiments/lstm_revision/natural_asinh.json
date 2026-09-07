@@ -1,0 +1,25 @@
+{
+  "config": {
+    "name": "natural_asinh",
+    "normalization": "asinh",
+    "balanced_sampler": false,
+    "positive_weight": 1.0,
+    "seed": 42,
+    "selection": "validation_engagement_auc",
+    "dropout": 0.4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "epochs": 50,
+    "patience": 10,
+    "batch_size": 512
+  },
+  "best_epoch": 45,
+  "epochs_run": 50,
+  "seconds": 148.02644564900015,
+  "validation_engagement": {
+    "roc_auc": 0.7399662119982522,
+    "average_precision": 0.44745806567985086,
+    "partial_auc_1pct": 0.5492458372907186,
+    "roc_recall_at_1pct_fpr": 0.15630397236614854
+  }
+}

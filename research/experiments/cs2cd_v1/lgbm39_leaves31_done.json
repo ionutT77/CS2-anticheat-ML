@@ -1,0 +1,12 @@
+{
+  "name": "lgbm39_leaves31",
+  "channels": 39,
+  "leaves": 31,
+  "best_iteration": 273,
+  "all_auc": 0.9324192545918258,
+  "reviewed_auc": 0.9428937432578209,
+  "selection_score": 0.9376564989248234,
+  "average_precision": 0.73563104443714,
+  "seconds": 5.1428399085998535,
+  "feature_count": 1638
+}

@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1120" viewBox="0 0 1440 1120" role="img" aria-labelledby="title desc">
+<title id="title">Reading a Counter-Strike encounter</title>
+<desc id="desc">An official Counter-Strike 2 gameplay screenshot provides context. A separate top-down drawing explains horizontal aim error as the angle between view direction and the victim's bearing. Three real channels from an included CS2CD validation encounter show yaw change, aim error and firing during four seconds before the first hit. Models combine eligible encounters into one player-match score, followed by a calibrated review threshold. The screenshot and telemetry come from different sources.</desc>
+<defs>
+  <style>
+    {{FONTS}}
+    text { font-family: 'Archivo', Arial, sans-serif; fill: #202020; }
+    .display { font-family: 'Newsreader Display', Georgia, serif; font-weight: 300; }
+    .label { font-size: 14px; font-weight: 600; letter-spacing: 1.5px; }
+    .muted { fill: #626262; }
+    .small { font-size: 16px; }
+    .body { font-size: 20px; }
+    .semibold { font-weight: 600; }
+    .accent { fill: #855536; }
+    .connector { fill: none; stroke: #666; stroke-width: 1.8; }
+  </style>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 1 L 9 5 L 0 9" fill="none" stroke="#555" stroke-width="1.5"/></marker>
+</defs>
+<rect width="1440" height="1120" fill="#fff"/>
+<text x="48" y="45" class="label">COUNTER-STRIKE / TELEMETRY RESEARCH</text>
+<path d="M48 65 H1392" stroke="#202020" stroke-width="1"/>
+<text x="48" y="127" class="display" font-size="58" letter-spacing="-1.3">Reading a Counter-Strike encounter</text>
+<text x="48" y="164" font-size="22" class="muted">Aim, movement and firing, measured over time and combined into a score for review.</text>
+
+<text x="48" y="211" class="label">01 / THE RECORDED ENCOUNTER</text>
+<image id="gameplay" x="48" y="233" width="808" height="454.5" href="{{SCREENSHOT}}"/>
+<text x="48" y="718" class="small muted">Official Valve gameplay image; separate from the telemetry example below.</text>
+
+<text x="928" y="211" class="label">HOW AIM ERROR IS MEASURED</text>
+<text x="928" y="258" class="display" font-size="32" letter-spacing="-.4">View direction and target</text>
+<g id="aim-geometry">
+  <path d="M956 500 L1039.205 444.530 A100 100 0 0 1 1055.769 493.198 Z" fill="#f3eee8"/>
+  <path d="M956 500 L1199 338" fill="none" stroke="#855536" stroke-width="2" stroke-dasharray="7 6"/>
+  <path d="M956 500 L1328 474.636" fill="none" stroke="#383838" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <path d="M1039.205 444.530 A100 100 0 0 1 1055.769 493.198" fill="none" stroke="#855536" stroke-width="2.4"/>
+  <path d="M1068 465 L1095 447" fill="none" stroke="#855536" stroke-width="1.2"/>
+  <circle cx="956" cy="500" r="11" fill="#383838"/>
+  <circle cx="956" cy="500" r="18" fill="none" stroke="#c7c7c7" stroke-width="1.2"/>
+  <circle cx="1214" cy="328" r="10" fill="#fff" stroke="#855536" stroke-width="2.2"/>
+  <circle cx="1214" cy="328" r="2.5" fill="#855536"/>
+  <path d="M1340 473 H1348 M1356 473 H1364 M1352 461 V469 M1352 477 V485" fill="none" stroke="#383838" stroke-width="2"/>
+</g>
+<text x="1214" y="300" class="body accent" text-anchor="middle">Target</text>
+<text x="1110" y="440" class="body semibold accent">Aim error</text>
+<text x="952" y="548" class="body">Player</text>
+<text x="1286" y="530" class="body" text-anchor="middle">View direction</text>
+<text x="928" y="604" class="small muted">Top-down schematic</text>
+<text x="928" y="640" font-size="19">The horizontal angle between the player’s</text>
+<text x="928" y="669" font-size="19">view direction and the victim’s bearing.</text>
+
+<path d="M48 754 H1392" stroke="#bcbcbc" stroke-width="1"/>
+<text x="48" y="797" class="label">02 / FOLLOW THE TELEMETRY</text>
+<text x="856" y="797" class="small muted" text-anchor="end">256 ticks / 4 seconds</text>
+<g id="traces">{{TRACES}}</g>
+<text x="48" y="853" class="body semibold">Yaw change</text>
+<text x="48" y="878" class="small muted">degrees / tick</text>
+<text x="48" y="921" class="body semibold">Aim error</text>
+<text x="48" y="946" class="small muted">horizontal degrees</text>
+<text x="48" y="989" class="body semibold">Firing</text>
+<text x="48" y="1014" class="small muted">0 or 1</text>
+<text x="536" y="1066" class="small muted" text-anchor="middle">Seconds before the first hit</text>
+
+<text x="928" y="797" class="label">03 / COMBINE ENCOUNTERS</text>
+<g id="scoring-geometry">
+  <g fill="#fff" stroke="#a2a2a2" stroke-width="1.2">
+    <rect x="928" y="839" width="118" height="36"/>
+    <rect x="928" y="884" width="118" height="36"/>
+    <rect x="928" y="929" width="118" height="36"/>
+  </g>
+  <path d="M1046 857 H1082 V902 M1046 947 H1082 V902 M1046 902 H1114" class="connector" marker-end="url(#arrow)"/>
+  <rect x="1132" y="865" width="260" height="74" fill="#fff" stroke="#383838" stroke-width="1.5"/>
+  <path d="M1262 940 V968" class="connector" marker-end="url(#arrow)"/>
+</g>
+<text x="987" y="863" class="small" text-anchor="middle">Encounter 1</text>
+<text x="987" y="908" class="small" text-anchor="middle">Encounter 2</text>
+<text x="987" y="953" class="small" text-anchor="middle">Further play</text>
+<text x="1262" y="898" font-size="24" class="semibold" text-anchor="middle">CNN + trees</text>
+<text x="1262" y="923" class="small muted" text-anchor="middle">Learn patterns in telemetry</text>
+<text x="1262" y="1002" font-size="23" class="semibold" text-anchor="middle">Player + match score</text>
+<text x="1262" y="1036" font-size="17" class="muted" text-anchor="middle">Apply a calibrated threshold</text>
+<text x="1262" y="1064" font-size="19" text-anchor="middle">Flag for human review</text>
+
+<text x="48" y="1102" font-size="14" class="muted">Traces: one included CS2CD validation encounter, showing three of 39 channels. Gameplay image © Valve Corporation.</text>
+</svg>

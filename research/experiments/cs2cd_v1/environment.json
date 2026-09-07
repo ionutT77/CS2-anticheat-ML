@@ -1,0 +1,13 @@
+{
+  "python": "3.13.5",
+  "packages": {
+    "numpy": "2.4.6",
+    "pandas": "2.2.3",
+    "scipy": "1.18.0",
+    "scikit-learn": "1.6.1",
+    "lightgbm": "4.6.0",
+    "torch": "2.9.0",
+    "pyarrow": "24.0.0",
+    "joblib": "1.4.2"
+  }
+}

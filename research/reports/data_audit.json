@@ -1,0 +1,155 @@
+{
+  "shape": [
+    12000,
+    30,
+    192,
+    5
+  ],
+  "dtype": "float32",
+  "nonfinite_values": 0,
+  "class_counts": {
+    "0": 10000,
+    "1": 2000
+  },
+  "majority_accuracy": 0.8333333333333334,
+  "constant_engagements": 2,
+  "duplicate_full_records": 88,
+  "duplicate_engagements_within_records": 2560,
+  "shared_exact_engagement_occurrences_across_records": 45968,
+  "additional_trajectory_overlap_edges": 4423,
+  "independent_duplicate_groups": 8647,
+  "largest_duplicate_group": 11,
+  "conflicting_label_groups": 13,
+  "excluded_conflicting_records": 30,
+  "splits": {
+    "calibration": {
+      "records": 1127,
+      "cheaters": 181,
+      "legit": 946,
+      "groups": 817
+    },
+    "excluded_conflict": {
+      "records": 30,
+      "cheaters": 15,
+      "legit": 15,
+      "groups": 13
+    },
+    "test": {
+      "records": 2038,
+      "cheaters": 315,
+      "legit": 1723,
+      "groups": 1573
+    },
+    "train": {
+      "records": 7616,
+      "cheaters": 1296,
+      "legit": 6320,
+      "groups": 5383
+    },
+    "validation": {
+      "records": 1189,
+      "cheaters": 193,
+      "legit": 996,
+      "groups": 861
+    }
+  },
+  "class_audit": {
+    "legit": {
+      "records": 10000,
+      "zero_tick_fraction": 0.0006774305555555556,
+      "firing_values": [
+        0.0,
+        1.0
+      ],
+      "sample_channel_quantiles": {
+        "delta_yaw": [
+          -179.7310028076172,
+          -10.833000183105469,
+          0.0,
+          10.635050230025128,
+          179.1269989013672
+        ],
+        "delta_pitch": [
+          -55.77799987792969,
+          -1.7740000486373901,
+          0.0,
+          1.718999981880188,
+          28.597000122070312
+        ],
+        "error_yaw": [
+          -179.99899291992188,
+          -135.13299560546875,
+          0.13099999725818634,
+          135.3560028076172,
+          179.99899291992188
+        ],
+        "error_pitch": [
+          -135.21400451660156,
+          -28.285999298095703,
+          -1.4390000104904175,
+          20.070999145507812,
+          99.14600372314453
+        ],
+        "firing": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ]
+      }
+    },
+    "cheater": {
+      "records": 2000,
+      "zero_tick_fraction": 0.0004163194444444444,
+      "firing_values": [
+        0.0,
+        1.0
+      ],
+      "sample_channel_quantiles": {
+        "delta_yaw": [
+          -170.2220001220703,
+          -10.503000259399414,
+          0.0,
+          10.387999534606934,
+          162.38900756835938
+        ],
+        "delta_pitch": [
+          -30.003999710083008,
+          -1.718999981880188,
+          0.0,
+          1.718999981880188,
+          31.575000762939453
+        ],
+        "error_yaw": [
+          -180.0,
+          -133.21001663208008,
+          0.25200000405311584,
+          132.78504364013676,
+          179.9929962158203
+        ],
+        "error_pitch": [
+          -95.447998046875,
+          -32.058008651733395,
+          -1.5429999828338623,
+          17.87299919128418,
+          85.52200317382812
+        ],
+        "firing": [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "limitations": [
+    "Player is a source array row according to the publisher; no Steam IDs or match IDs are supplied.",
+    "Duplicate-connected rows stay together, but true identity, match, temporal and provenance separation cannot be verified.",
+    "Labels and sampling procedures cannot be independently verified from these arrays.",
+    "Each engagement includes 5 seconds before and 1 second after; this benchmark is retrospective.",
+    "Kaggle lists the dataset license as Unknown; archive is retained locally, not redistributed."
+  ]
+}

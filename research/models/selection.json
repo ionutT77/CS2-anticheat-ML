@@ -1,0 +1,48 @@
+{
+  "name": "top2_neural",
+  "components": {
+    "cnn_seed42": 0.5,
+    "cnn_seed42_raw5": 0.5
+  },
+  "mode": "probability",
+  "roc_auc": 0.8830451339034896,
+  "average_precision": 0.689175139449833,
+  "partial_auc_1pct": 0.6137124852679654,
+  "roc_recall_at_1pct_fpr": 0.31088082901554404,
+  "selected_on": "validation ROC-AUC only",
+  "frozen_at_utc": "2026-09-06T21:34:11.672579+00:00",
+  "sha256": {
+    "models/cnn_seed42.pt": "273cedbd4caf7dc5a1ad69dd5b43d044521b338ad6d4b913d7802842dd163ee7",
+    "models/cnn_seed42_raw5.pt": "e2c94ab8f9b4a4139ffcf8274687d6d2ff5b6424448db660314fe6eea35dfd34",
+    "data/processed/splits.csv": "2cfd94b06e9c5db4ac7f2d4e16b2df636beca5d467da9d1c058466f6da226b63",
+    "data/processed/feature_names.json": "8137964cba6dda8f7435cccdca26c0498a4e9552c31ce701764e09daa7dfc6e0",
+    "reports/protocol.md": "05bbac6be2114ce30477c7c7e94cf314a26b88b5ab876ecd70d8f58e8f0609b9",
+    "anticheat/features.py": "4068fb059efe64c598c12c7e997d21d0fd9992a0aeb1979f47bad0006addaef1",
+    "anticheat/neural.py": "3429b4468205d6ff99aa6a165404ac2ae31440183ec30574037cee4a673b2d35",
+    "anticheat/inference.py": "24eb377d352bc1e4940976b12a76db98392834faf6b78180b1405dfefbd51460",
+    "data/raw/download_manifest.json": "a1afb03c0df79e576e4f1ef1514b2597c8a8d7a9be94cd7b89ff43697bf4dfc1"
+  },
+  "candidate_count": 28,
+  "validation_records": 1189,
+  "evaluated_candidates": [
+    "catboost_depth4",
+    "catboost_depth6",
+    "cnn_seed123",
+    "cnn_seed2026_ema",
+    "cnn_seed42",
+    "cnn_seed42_raw5",
+    "engagement_lgbm",
+    "extratrees",
+    "hybrid_seed42",
+    "lgbm_leaves15",
+    "lgbm_leaves31",
+    "lgbm_leaves63",
+    "lgbm_movement_only",
+    "lgbm_no_zero_features",
+    "lgbm_pre_only",
+    "logistic",
+    "lstm_seed42_fp32",
+    "xgb_depth3",
+    "xgb_depth5"
+  ]
+}

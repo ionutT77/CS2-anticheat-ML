@@ -1,0 +1,15 @@
+{
+  "config": {
+    "name": "tcn39_seed123",
+    "architecture": "tcn",
+    "channels": 39,
+    "seed": 123
+  },
+  "best_epoch": 17,
+  "epochs": 25,
+  "selection_score": 0.9436268994191903,
+  "reviewed_auc": 0.9470064724919095,
+  "seconds": 53.089277505874634,
+  "parameters": 160641,
+  "train_players": 4523
+}

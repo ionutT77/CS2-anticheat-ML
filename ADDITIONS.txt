@@ -1,0 +1,37 @@
+Research additions | 7 September 2026
+
+Based on upstream commit 06427ceabd9990a8bc278b21758e1b04aa9d46f7.
+The original src/ and notebooks/ remain the starting prototype.
+
+Start here
+  README.md                       Project, results and a CPU example
+  docs/anticheat_review.pdf        Three-page review and recommendations
+  docs/anticheat_review.html       Self-contained HTML report
+  docs/anticheat_review.source.html Report text and editable layout source
+  research/METHODS.md              Data, evaluation and feature definitions
+  research/REPRODUCING.md          Inference and fresh training commands
+
+Reusable implementation
+  research/anticheat/              Extraction, models, metrics and inference
+  research/scripts/                Download, audit, train, calibrate and score
+  research/tests/                  Split, geometry and model parity checks
+
+Saved experiments
+  research/models/                Selected Kaggle CNN pair and calibration
+  research/experiments/
+    lstm_revision/           Original architecture, revised training
+    cs2cd_v1/                     Ten candidates, selection and test scores
+  research/results/               Frozen Kaggle benchmark results
+  research/examples/              One CS2 validation player and expected scores
+
+Model files, numeric learning curves, predictions and scientific protocols
+are included. Raw datasets, training caches and execution transcripts are
+excluded. Download manifests pin the source data. See research/DATA_SOURCES.md for
+attribution and redistribution details.
+
+Only the two selected Kaggle CNN checkpoints are included from the broader
+Kaggle search. Its full numeric leaderboard remains available. All four
+LSTM repair candidates and all ten CS2 candidates are included.
+
+The Jupyter private key and certificate were removed from tracking in this
+branch. If still used, replace them. Their upstream history remains.

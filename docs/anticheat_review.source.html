@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Counter-Strike cheat detection | Review for Ionuț</title>
+<meta name="description" content="A review of Ionuț’s LSTM, the revised training procedure and a new CS2 benchmark, with results and next experiments.">
+<style>{{FONTS}}
+{{STYLES}}</style>
+</head>
+<body>
+<main>
+<section class="page" aria-label="Ionuț’s LSTM and the Kaggle benchmark">
+<header class="running-head"><span>Counter-Strike / Model evaluation</span><span>7 September 2026</span></header>
+<h1>Counter-Strike<br>cheat detection</h1>
+<p class="lede">An assessment of Ionuț’s LSTM, an audit of its data, revised training and a larger CS2 experiment.</p>
+<h2>What the original LSTM learned</h2>
+<p>Ionuț’s two-layer LSTM is a reasonable starting architecture. Normalization uses training data, and each publisher record’s engagements stay together. The journal’s best accuracy run gives the following comparison.</p>
+<div class="comparison">
+<p class="label table-unit">Kaggle / Ionuț’s published split / one engagement</p>
+<table aria-label="Ionuț’s reported result and the non-cheater baseline">
+<thead><tr><th>Model</th><th class="num">ROC-AUC</th><th class="num">Accuracy</th></tr></thead>
+<tbody><tr><td>Always predict non-cheater</td><td class="num">0.500</td><td class="num">83.3%</td></tr><tr><td>Ionuț’s reported LSTM</td><td class="num">0.715</td><td class="num">59.1%</td></tr></tbody>
+</table>
+</div>
+<p>The AUC shows a useful ranking signal. At the default threshold, reported precision is 24.9%, so roughly three quarters of flags are false. Balanced sampling combined with a positive loss weight pushes decisions toward the cheating class; the threshold needs calibration.</p>
+<h2>Revising the same architecture</h2>
+<p>We grouped overlapping records, excluded 30 records with contradictory labels and separated training, validation, calibration and test data. The LSTM retains its 120,897 parameters. Revised training uses natural sampling, unweighted loss, compressed inputs and a separately calibrated threshold.</p>
+<div class="comparison">
+<p class="label table-unit">Kaggle / Audited split / record of 30 engagements</p>
+<table aria-label="Revised LSTM and CNN results on the audited Kaggle split">
+<thead><tr><th>Model</th><th class="num">ROC-AUC</th><th class="num">Accuracy</th></tr></thead>
+<tbody><tr><td>Always predict non-cheater</td><td class="num">0.500</td><td class="num">84.5%</td></tr><tr><td>Ionuț’s LSTM, revised training</td><td class="num">0.843</td><td class="num">88.5%</td></tr><tr class="emphasis"><td>Selected CNN pair</td><td class="num">0.859</td><td class="num">89.3%</td></tr></tbody>
+</table>
+</div>
+<div class="notes-grid">
+<div><h3>The split needs attention</h3><p>The published split places 699 of 1,800 test records in trajectory groups shared with training; 25 are exact duplicates. Their effect on AUC is unknown. Missing published weights and predictions prevent exact replay.</p></div>
+<div><h3>The improvement is modest</h3><p>On the audited split, engagement AUC rises from 0.742 to 0.750. Pooling 30 engagements raises record AUC. Differences between the record models remain uncertain; the LSTM supplement uses a previously examined test set.</p></div>
+</div>
+<p class="footnote"><strong>ROC-AUC</strong> is the probability that a positive-label example ranks above a negative-label example, with ties counting as half. A constant score has AUC 0.5. Accuracy and precision also depend on the threshold and class mixture.</p>
+<footer class="folio"><span>Counter-Strike / Research review</span><span>01</span></footer>
+</section>
+
+<section class="page" aria-label="CS2 experiment and operating thresholds">
+<header class="running-head"><span>CS2CD / Reserved test matches</span><span>Results</span></header>
+<h1 class="compact">A richer CS2 benchmark</h1>
+<p class="lede">The CS2 experiment adds movement, distance, weapon and recoil context to aim and firing, then combines encounters into one assessment per player and match.</p>
+<div class="result-intro">
+<div><p class="result-number">0.973</p><p class="result-caption">Test ROC-AUC<br>95% interval: 0.956 to 0.985</p></div>
+<div><p>We fetched and verified 52.6 GB from 795 matches, extracting 141,633 encounters with 39 channels. Each input covers four seconds before the first bullet hit. The victim is identified retrospectively from that hit.</p></div>
+</div>
+<p class="method-line">Test set: 1,130 eligible player-matches across 120 held-out matches, including 214 positive labels. Model selection uses validation data; calibration and thresholds use a separate split.</p>
+<figure>
+<p class="label">Models trained and evaluated on the same CS2 benchmark</p>
+<img class="chart" src="{{COMPARISON}}" alt="Test ROC-AUC: LSTM with five channels 0.917; LSTM with 39 channels 0.931; patch Transformer 0.946; temporal CNN 0.963; boosted trees 0.968; selected blend 0.973. Lines show 95 percent intervals.">
+<figcaption>Points show test ROC-AUC. Lines show 95% intervals from 2,000 resamples of complete matches. The selected blend’s advantage over the best tree is uncertain.</figcaption>
+</figure>
+<p>The selected model combines 75% temporal CNN and 25% boosted trees. Within manually reviewed matches, AUC is 0.971, supporting a signal beyond collection-source membership. Real-player separation across matches cannot be verified.</p>
+<h2 class="decisions">Thresholds and false flags</h2>
+<p>At the threshold chosen for accuracy, the model reaches 93.0%, compared with the 81.1% non-cheater baseline: 79 errors instead of 214. A stricter threshold reduces false flags and misses more positive-label cases.</p>
+<table aria-label="Tradeoff between the accuracy and stricter review policies">
+<thead><tr><th>Calibration-selected policy</th><th class="num">Found / 214</th><th class="num">False flags / 916</th><th class="num">Precision</th></tr></thead>
+<tbody><tr><td>Maximum accuracy</td><td class="num">184</td><td class="num">49</td><td class="num">79.0%</td></tr><tr class="emphasis"><td>Target 1% false positives</td><td class="num">67</td><td class="num">4</td><td class="num">94.4%</td></tr></tbody>
+</table>
+<p class="footnote">The strict policy’s observed test false-positive rate is 0.44%, with 31.3% recall. Counts use the publisher’s labels. At an illustrative 1% cheating prevalence, the same rates imply about 42% precision. Reliability at 99% has not been established.</p>
+<footer class="folio"><span>Counter-Strike / Research review</span><span>02</span></footer>
+</section>
+
+<section class="page" aria-label="Next experiments and the repository handoff">
+<header class="running-head"><span>Next experiments</span><span>Recommendations for Ionuț</span></header>
+<h1 class="compact">Where to take it next</h1>
+<p class="lede">The next evaluation should establish who is being scored, how much gameplay the model sees and how confidently the labels describe cheating.</p>
+<div class="priorities">
+<div class="priority"><h3>Independent data</h3><p>Collect verified labels, stable pseudonymous player IDs across matches, skilled legitimate players and known cheat activation intervals. Reserve a separate recording source and future matches for testing. CS2CD remaps identities per match, and some negative labels are unreviewed.</p></div>
+<div class="priority"><h3>Observation period</h3><p>AUC rises from 0.834 after one eligible encounter to 0.946 after up to five and 0.973 over the match. These counts do not measure elapsed detection time. Add miss-only encounters and assess the players currently excluded: coverage is 94.5% of the release.</p></div>
+<div class="priority"><h3>Feature ablations</h3><p>Input-command mouse fields exist in CS2CD and are a useful next experiment. Exact visibility and audibility require faithful reconstruction or new recordings. Retain strong tree and LSTM baselines. More channels helped trees clearly here; the overall LSTM feature gain is uncertain.</p></div>
+</div>
+<div class="two-col">
+<div><h3>Sequence pretraining and LLMs</h3><p>The numerical patch Transformer reached 0.946 AUC. Masked pretraining on gameplay sequences is worth testing. No text LLM was fine-tuned. An LLM could help summarize telemetry for human review, with every claim tied to recorded evidence.</p></div>
+<div><h3>Presenting the thesis</h3><p>Keep the LSTM as the reference, report calibration-selected thresholds and false-positive counts, and reserve a new final holdout. The current results do not establish an information ceiling or rule out overfitting. The code and journal provide a useful foundation.</p></div>
+</div>
+<div class="handoff">
+<h3>The accompanying repository</h3>
+<p><code>CS2-anticheat-ML</code> retains the original prototype. The additions in <code>research/</code> provide extraction, training, calibration, saved models, predictions and reproducible experiments. Tests and a runnable example are included. <code>README.md</code> introduces the project; <code>ADDITIONS.txt</code> maps the files.</p>
+<p class="hygiene">The accompanying branch removes the committed Jupyter private key and certificate from tracking. Replace them if still in use; upstream history remains.</p>
+</div>
+<div class="sources">
+<p class="label">Sources and evidence</p>
+<p><a href="https://github.com/ionutT77/CS2-anticheat-ML/tree/06427ceabd9990a8bc278b21758e1b04aa9d46f7">Ionuț’s code and journal, commit 06427ce</a>;
+<a href="https://www.kaggle.com/datasets/emstatsl/csgo-cheating-dataset">emstatsl, CS:GO dataset</a>;
+<a href="https://huggingface.co/datasets/CS2CD/CS2CD.Counter-Strike_2_Cheat_Detection/tree/44e5129654508b22802a050a45bcdbb44b103d87">CS2CD, pinned release</a> (CC BY 4.0);
+<a href="https://arxiv.org/abs/2508.06348">Loo, Lužkov and Burelli, AntiCheatPT (2025)</a>.</p>
+<p>Our CS2 extraction differs from the paper’s benchmark. Full methods and exact results are in <code>research/METHODS.md</code> and the experiment <code>test_results.json</code> files. Ionuț’s original metrics are journal reports; the remaining numbers come from the saved experiments.</p>
+</div>
+<footer class="folio"><span>Counter-Strike / Research review</span><span>03</span></footer>
+</section>
+</main>
+</body>
+</html>

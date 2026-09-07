@@ -1,0 +1,26 @@
+[
+  {
+    "type": "file",
+    "oid": "1ef325f1b111266a6b26e0196871bd78baa8c2f3",
+    "size": 2461,
+    "path": ".gitattributes"
+  },
+  {
+    "type": "file",
+    "oid": "5ef43ed97f4693d153453136d96a94d97f720483",
+    "size": 10825,
+    "path": "README.md"
+  },
+  {
+    "type": "file",
+    "oid": "79c7330da5034ae7f3de549ac655f518b527ca9b",
+    "size": 9385585152,
+    "lfs": {
+      "oid": "457cae1b6f28462d943db353969a86d145de58f7ab942ce8df6149cabf09bcc8",
+      "size": 9385585152,
+      "pointerSize": 135
+    },
+    "xetHash": "25632b1f2660b102534842ddb61238621bec8092954a485488be34ef3afb1feb",
+    "path": "context_windows_256.tar"
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "model": "cnn_seed42",
+  "seconds": 186.71455960699677,
+  "best_epoch": 24,
+  "parameters": 182370,
+  "config": {
+    "kind": "cnn",
+    "seed": 42,
+    "epochs": 35,
+    "patience": 9,
+    "batch_size": 24,
+    "width": 48,
+    "lr": 0.0007,
+    "weight_decay": 0.03
+  },
+  "validation": {
+    "roc_auc": 0.8734627629689744,
+    "average_precision": 0.6773913958376525,
+    "partial_auc_1pct": 0.6205876961644061,
+    "roc_recall_at_1pct_fpr": 0.33678756476683935
+  },
+  "train": {
+    "roc_auc": 0.9692569151429911,
+    "average_precision": 0.9217496898903208,
+    "partial_auc_1pct": 0.7980329841110538,
+    "roc_recall_at_1pct_fpr": 0.7986111111111112
+  },
+  "torch_version": "2.9.0"
+}

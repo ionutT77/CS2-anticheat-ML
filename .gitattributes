@@ -1,0 +1,9 @@
+docs/anticheat_review.html linguist-generated=true
+docs/anticheat_review.pdf binary
+docs/assets/cs2_comparison.svg linguist-generated=true
+docs/assets/telemetry.svg linguist-generated=true
+research/data/** linguist-generated=true
+research/experiments/** linguist-generated=true
+research/models/** linguist-generated=true
+research/results/** linguist-generated=true
+research/reports/*.json linguist-generated=true

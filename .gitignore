@@ -64,3 +64,9 @@ wandb/
 *.tmp
 .env
 .env.local
+
+# Local experiment reruns and Jupyter TLS material
+/local_runs/
+/jupyter_cert.key
+/jupyter_cert.pem
+.pytest_cache/

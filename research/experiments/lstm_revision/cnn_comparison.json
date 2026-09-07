@@ -1,0 +1,9 @@
+{
+  "cnn_minus_revised_lstm_auc": 0.015410551916645754,
+  "paired_group_bootstrap_95pct": [
+    -0.007138866596241597,
+    0.03838690474021368
+  ],
+  "bootstrap_iterations": 1000,
+  "note": "Supplementary paired comparison on the previously reported benchmark; no model selection changes."
+}

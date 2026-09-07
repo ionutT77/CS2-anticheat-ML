@@ -1,0 +1,20 @@
+{
+  "diagnostic_source": {
+    "all_auc": 0.880794701986755,
+    "reviewed_auc": 0.5,
+    "selection_score": 0.6903973509933775,
+    "average_precision": 0.4881516587677725
+  },
+  "diagnostic_map": {
+    "all_auc": 0.7773902141066033,
+    "reviewed_auc": 0.5959187342682488,
+    "selection_score": 0.6866544741874261,
+    "average_precision": 0.411577681157259
+  },
+  "diagnostic_source_map": {
+    "all_auc": 0.871589618294434,
+    "reviewed_auc": 0.4613897878460985,
+    "selection_score": 0.6664897030702663,
+    "average_precision": 0.464796064118299
+  }
+}

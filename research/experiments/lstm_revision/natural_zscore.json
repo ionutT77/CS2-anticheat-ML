@@ -1,0 +1,25 @@
+{
+  "config": {
+    "name": "natural_zscore",
+    "normalization": "zscore",
+    "balanced_sampler": false,
+    "positive_weight": 1.0,
+    "seed": 42,
+    "selection": "validation_engagement_auc",
+    "dropout": 0.4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "epochs": 50,
+    "patience": 10,
+    "batch_size": 512
+  },
+  "best_epoch": 44,
+  "epochs_run": 50,
+  "seconds": 146.71618253600013,
+  "validation_engagement": {
+    "roc_auc": 0.7268822902432991,
+    "average_precision": 0.41892403653266214,
+    "partial_auc_1pct": 0.5378343233230379,
+    "roc_recall_at_1pct_fpr": 0.12400690846286701
+  }
+}

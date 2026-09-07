@@ -1,0 +1,2 @@
+player,encounters,raw_score,calibrated_score,flag_accuracy,flag_f1,flag_default_0_5,flag_fpr_1pct,flag_fpr_0_1pct,flag_precision99_exploratory
+Player_1,16,0.0449847180597074,0.1080871512292234,False,False,False,False,False,False

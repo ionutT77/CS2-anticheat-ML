@@ -1,0 +1,17 @@
+{
+  "checked_utc": "2026-09-07T08:45:32.015674+00:00",
+  "cause": "cuDNN TF32 inference depends on batch size; saved training-time validation used batches of 512",
+  "tf32_gpu_vs_saved_max_error": {
+    "reference_recipe": 0.00042688847,
+    "natural_asinh": 0.0005347729
+  },
+  "ieee_gpu_vs_saved_max_error": {
+    "reference_recipe": 1.4960766e-05,
+    "natural_asinh": 1.40070915e-05
+  },
+  "ieee_gpu_vs_cpu_max_error": {
+    "reference_recipe": 3.0398369e-06,
+    "natural_asinh": 2.026558e-06
+  },
+  "resolution": "Disable cuDNN TF32 in saved-checkpoint inference; keep all trained weights and validation-based model choices. No calibration/test predictions existed at this point."
+}

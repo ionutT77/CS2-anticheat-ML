@@ -1,0 +1,25 @@
+{
+  "config": {
+    "name": "reference_recipe",
+    "normalization": "zscore",
+    "balanced_sampler": true,
+    "positive_weight": 2.0,
+    "seed": 42,
+    "selection": "validation_weighted_loss",
+    "dropout": 0.4,
+    "lr": 0.0005,
+    "weight_decay": 0.0001,
+    "epochs": 50,
+    "patience": 10,
+    "batch_size": 512
+  },
+  "best_epoch": 23,
+  "epochs_run": 33,
+  "seconds": 148.85368191399994,
+  "validation_engagement": {
+    "roc_auc": 0.7138184950510158,
+    "average_precision": 0.3958235775453452,
+    "partial_auc_1pct": 0.5369198650862291,
+    "roc_recall_at_1pct_fpr": 0.11951640759930915
+  }
+}

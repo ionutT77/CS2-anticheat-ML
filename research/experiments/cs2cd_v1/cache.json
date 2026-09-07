@@ -1,0 +1,13 @@
+{
+  "events": 141633,
+  "eligible_players": 7508,
+  "channels": 39,
+  "event_features": 546,
+  "player_features": 1638,
+  "seconds": 132.21766638755798,
+  "source_sha256": {
+    "anticheat/cs2_data.py": "08043b1a02b606a447ee1dce9b10bdb4ed01187ac3cc0526e54addee18692387",
+    "anticheat/cs2_features.py": "8da6ffc65fa808505dbb88abb984090cfdd4333172aa7cd08b22e7cc60ff54cd",
+    "scripts/cache_cs2cd.py": "e5cda4cde5679a5478656a37de10b7d0b178964336aa0bc7c8014ff06d18f05e"
+  }
+}

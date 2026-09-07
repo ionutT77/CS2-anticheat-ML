@@ -1,0 +1,127 @@
+{
+  "models": {
+    "reference": "reference_recipe",
+    "improved": "natural_asinh"
+  },
+  "player_pooling": {
+    "reference": "mean",
+    "improved": "logitmean"
+  },
+  "validation_runs": [
+    {
+      "config": {
+        "name": "reference_recipe",
+        "normalization": "zscore",
+        "balanced_sampler": true,
+        "positive_weight": 2.0,
+        "seed": 42,
+        "selection": "validation_weighted_loss",
+        "dropout": 0.4,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "epochs": 50,
+        "patience": 10,
+        "batch_size": 512
+      },
+      "best_epoch": 23,
+      "epochs_run": 33,
+      "seconds": 148.85368191399994,
+      "validation_engagement": {
+        "roc_auc": 0.7138184950510158,
+        "average_precision": 0.3958235775453452,
+        "partial_auc_1pct": 0.5369198650862291,
+        "roc_recall_at_1pct_fpr": 0.11951640759930915
+      }
+    },
+    {
+      "config": {
+        "name": "natural_zscore",
+        "normalization": "zscore",
+        "balanced_sampler": false,
+        "positive_weight": 1.0,
+        "seed": 42,
+        "selection": "validation_engagement_auc",
+        "dropout": 0.4,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "epochs": 50,
+        "patience": 10,
+        "batch_size": 512
+      },
+      "best_epoch": 44,
+      "epochs_run": 50,
+      "seconds": 146.71618253600013,
+      "validation_engagement": {
+        "roc_auc": 0.7268822902432991,
+        "average_precision": 0.41892403653266214,
+        "partial_auc_1pct": 0.5378343233230379,
+        "roc_recall_at_1pct_fpr": 0.12400690846286701
+      }
+    },
+    {
+      "config": {
+        "name": "natural_asinh",
+        "normalization": "asinh",
+        "balanced_sampler": false,
+        "positive_weight": 1.0,
+        "seed": 42,
+        "selection": "validation_engagement_auc",
+        "dropout": 0.4,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "epochs": 50,
+        "patience": 10,
+        "batch_size": 512
+      },
+      "best_epoch": 45,
+      "epochs_run": 50,
+      "seconds": 148.02644564900015,
+      "validation_engagement": {
+        "roc_auc": 0.7399662119982522,
+        "average_precision": 0.44745806567985086,
+        "partial_auc_1pct": 0.5492458372907186,
+        "roc_recall_at_1pct_fpr": 0.15630397236614854
+      }
+    },
+    {
+      "config": {
+        "name": "natural_asinh_seed123",
+        "normalization": "asinh",
+        "balanced_sampler": false,
+        "positive_weight": 1.0,
+        "seed": 123,
+        "selection": "validation_engagement_auc",
+        "dropout": 0.4,
+        "lr": 0.0005,
+        "weight_decay": 0.0001,
+        "epochs": 50,
+        "patience": 10,
+        "batch_size": 512
+      },
+      "best_epoch": 37,
+      "epochs_run": 47,
+      "seconds": 139.68095089500002,
+      "validation_engagement": {
+        "roc_auc": 0.7358374488165673,
+        "average_precision": 0.4406058876720834,
+        "partial_auc_1pct": 0.5489281310939073,
+        "roc_recall_at_1pct_fpr": 0.15094991364421417
+      }
+    }
+  ],
+  "parity": {
+    "reference": {
+      "saved_validation_gpu_max_abs_error": 1.4483928680419922e-05,
+      "cpu_gpu_max_abs_error": 1.7881393432617188e-07
+    },
+    "improved": {
+      "saved_validation_gpu_max_abs_error": 1.6927719116210938e-05,
+      "cpu_gpu_max_abs_error": 1.341104507446289e-07
+    }
+  },
+  "frozen_at_utc": "2026-09-07T08:45:40.095049+00:00",
+  "sha256": {
+    "reference_recipe.pt": "4bb5f2f8a44973755ee880058c834528cfc682d80a25a4d9f6b7cc6334f6c6f7",
+    "natural_asinh.pt": "fdc13295b92d7895310665f8a6ab4d69abc9eef0a9c6d3614c74f69e6d3f0a2a"
+  }
+}

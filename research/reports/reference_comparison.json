@@ -1,0 +1,206 @@
+{
+  "reference_commit": "06427ceabd9990a8bc278b21758e1b04aa9d46f7",
+  "reference_split": {
+    "train": {
+      "records": 8399,
+      "legit": 6999,
+      "cheaters": 1400,
+      "engagements": 251970,
+      "majority_accuracy": 0.8333134897011549
+    },
+    "validation": {
+      "records": 1801,
+      "legit": 1501,
+      "cheaters": 300,
+      "engagements": 54030,
+      "majority_accuracy": 0.8334258745141588,
+      "records_in_trajectory_groups_also_in_train": 645,
+      "groups_shared_with_train": 580,
+      "exact_full_record_duplicates_of_training": 15
+    },
+    "test": {
+      "records": 1800,
+      "legit": 1500,
+      "cheaters": 300,
+      "engagements": 54000,
+      "majority_accuracy": 0.8333333333333334,
+      "records_in_trajectory_groups_also_in_train": 699,
+      "groups_shared_with_train": 613,
+      "exact_full_record_duplicates_of_training": 25
+    }
+  },
+  "reference_reported_runs": [
+    {
+      "run": 1,
+      "reported_accuracy": 0.481,
+      "reported_precision": 0.219,
+      "reported_recall": 0.823,
+      "reported_auc": 0.718,
+      "accuracy_gap_vs_majority_pp": -35.23333333333334,
+      "implied_fpr_approx": 0.5874,
+      "implied_balanced_accuracy_approx": 0.6177999999999999,
+      "error_ratio_vs_majority": 3.1140000000000003
+    },
+    {
+      "run": 2,
+      "reported_accuracy": 0.591,
+      "reported_precision": 0.249,
+      "reported_recall": 0.723,
+      "reported_auc": 0.715,
+      "accuracy_gap_vs_majority_pp": -24.23333333333334,
+      "implied_fpr_approx": 0.4354,
+      "implied_balanced_accuracy_approx": 0.6437999999999999,
+      "error_ratio_vs_majority": 2.454
+    },
+    {
+      "run": 3,
+      "reported_accuracy": 0.572,
+      "reported_precision": 0.243,
+      "reported_recall": 0.744,
+      "reported_auc": 0.713,
+      "accuracy_gap_vs_majority_pp": -26.13333333333334,
+      "implied_fpr_approx": 0.46240000000000003,
+      "implied_balanced_accuracy_approx": 0.6408,
+      "error_ratio_vs_majority": 2.5680000000000005
+    }
+  ],
+  "our_selected_model": {
+    "test_records": 2038,
+    "test_cheaters": 315,
+    "test_legit": 1723,
+    "majority_baseline": {
+      "roc_auc": 0.5,
+      "average_precision": 0.15456329735034346,
+      "partial_auc_1pct": 0.5,
+      "roc_recall_at_1pct_fpr": 0.0,
+      "threshold": 0.5,
+      "accuracy": 0.8454367026496565,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "fpr": 0.0,
+      "brier": 0.13091699330543274,
+      "log_loss": 0.4314278362498445,
+      "confusion_matrix": [
+        [
+          1723,
+          0
+        ],
+        [
+          315,
+          0
+        ]
+      ]
+    },
+    "selected_ranking": {
+      "roc_auc": 0.8585965785037171,
+      "average_precision": 0.6675908668740915,
+      "partial_auc_1pct": 0.6165185062661417,
+      "roc_recall_at_1pct_fpr": 0.3396825396825397
+    },
+    "accuracy_operating_point": {
+      "roc_auc": 0.8585965785037171,
+      "average_precision": 0.6675908668740915,
+      "partial_auc_1pct": 0.6165185062661417,
+      "roc_recall_at_1pct_fpr": 0.3396825396825397,
+      "threshold": 0.4576640725135803,
+      "accuracy": 0.8930323846908734,
+      "balanced_accuracy": 0.7551428387179984,
+      "precision": 0.691699604743083,
+      "recall": 0.5555555555555556,
+      "f1": 0.6161971830985915,
+      "fpr": 0.04526987811955891,
+      "brier": 0.08240780499780116,
+      "log_loss": 0.28747190481554713,
+      "confusion_matrix": [
+        [
+          1645,
+          78
+        ],
+        [
+          140,
+          175
+        ]
+      ]
+    },
+    "accuracy_gain_pp": 4.759568204121689,
+    "errors_baseline": 315,
+    "errors_model": 218,
+    "additional_correct": 97,
+    "relative_error_reduction": 0.30793650793650795,
+    "fpr_1pct_operating_point": {
+      "roc_auc": 0.8585965785037171,
+      "average_precision": 0.6675908668740915,
+      "partial_auc_1pct": 0.6165185062661417,
+      "roc_recall_at_1pct_fpr": 0.3396825396825397,
+      "threshold": 0.6953508257865906,
+      "accuracy": 0.8920510304219823,
+      "balanced_accuracy": 0.6819242922551105,
+      "precision": 0.8321678321678322,
+      "recall": 0.37777777777777777,
+      "f1": 0.519650655021834,
+      "fpr": 0.013929193267556587,
+      "brier": 0.08240780499780116,
+      "log_loss": 0.28747190481554713,
+      "confusion_matrix": [
+        [
+          1699,
+          24
+        ],
+        [
+          196,
+          119
+        ]
+      ]
+    },
+    "fpr_0_1pct_operating_point": {
+      "roc_auc": 0.8585965785037171,
+      "average_precision": 0.6675908668740915,
+      "partial_auc_1pct": 0.6165185062661417,
+      "roc_recall_at_1pct_fpr": 0.3396825396825397,
+      "threshold": 0.9746902585029602,
+      "accuracy": 0.8454367026496565,
+      "balanced_accuracy": 0.5,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "fpr": 0.0,
+      "brier": 0.08240780499780116,
+      "log_loss": 0.28747190481554713,
+      "confusion_matrix": [
+        [
+          1723,
+          0
+        ],
+        [
+          315,
+          0
+        ]
+      ]
+    }
+  },
+  "our_frozen_engagement_model": {
+    "model": "engagement_lgbm",
+    "sha256": "5f54a45b4bf31b360624a2197f325a926efac0b0ce29b8322a1ae2db9364b7df",
+    "test_engagements": 61140,
+    "test_records": 2038,
+    "roc_auc": 0.7526405279336214,
+    "average_precision": 0.44729553155819696,
+    "accuracy_at_0_5_uncalibrated": 0.8602387962054302,
+    "confusion_matrix_at_0_5_uncalibrated": [
+      [
+        50830,
+        860
+      ],
+      [
+        7685,
+        1765
+      ]
+    ],
+    "player_pooling": "logitmean",
+    "player_aggregated_auc": 0.8461082091958472,
+    "note": "Frozen existing engagement model; supplementary evaluation, no training or selection changes. Different test split from Ionuț; not a matched comparison."
+  },
+  "method": "Reconstructed split from pinned script using seed 42; overlaps from our audited full-record/engagement/movement groups; whole-record duplicates also verified against raw arrays. The published training run was not replayed."
+}

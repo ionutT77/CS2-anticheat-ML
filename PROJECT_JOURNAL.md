@@ -423,9 +423,75 @@ After three runs with significantly different hyperparameters, AUC remained at 0
 
 
 
+### Entry 11 - CS2CD Saved Model Recovery and Demo Validation
+**Date:** 2026-09-14  
+**What was done:**
+
+- Confirmed that the selected CS2CD model was already trained and present as a blend of `75% tcn39_seed123` and `25% lgbm39_leaves15`.
+- Found that the distributed SHA-256 metadata described an older project state. The inference guard rejected the saved weights because the selection, calibration, audit and source hashes did not agree.
+- Repaired the metadata-only provenance chain on an isolated branch, then merged the change into `main`.
+- Updated checksum references in the model selection, calibration, audit, test-results and LSTM protocol JSON files.
+- Installed the missing `lightgbm` dependency in the project virtual environment.
+- No `.pt`, `.joblib` or Python source files were changed during this repair.
+
+**Validation:**
+
+- Artifact verification passed for 41 files and the selection/calibration chain.
+- The supplied CPU inference demo completed successfully.
+- The example produced a raw score of approximately `0.04498475` and a calibrated score of approximately `0.10808721`; all example review flags were false.
+- The research test suite passed: `16 passed`.
+
+**Interpretation:**
+
+The project contains a trained and runnable CS2CD benchmark model. The `0.973` ROC-AUC result belongs to the frozen CS2CD player-match evaluation, not to live gameplay. The predictor accepts extracted NPZ telemetry, not a raw CS2 `.dem` file.
+
+---
+
+### Entry 12 - Planned Private-Server Spectator Evaluation
+**Date:** 2026-09-14  
+**Decision:**
+
+The next testing method will use an authorized private CS2 server. The owner will invite consenting friends, spectate their gameplay, collect telemetry, and run the model in shadow/review mode. The system must not automatically ban or punish participants.
+
+**Planned data flow:**
+
+```text
+Private CS2 server
+   -> authorized server-side telemetry collector
+   -> player state and game-event records
+   -> 256-tick encounter windows
+   -> 39 raw features in the documented order
+   -> existing TCN + LightGBM inference
+   -> per-encounter and per-player report
+```
+
+**Required model input:**
+
+- One NPZ file per match.
+- `x` with shape `[encounters, 256, 39]`.
+- `player` with match-local player identifiers.
+- `tick` with chronological encounter ticks.
+- Raw, unnormalized features in the order documented in `research/examples/input_schema.json`.
+- An eligible encounter currently requires a damage event; the existing model is not designed to score arbitrary moments without an encounter.
+
+**Implementation constraints:**
+
+- A raw `.dem` file is not currently accepted by `predict_cs2cd.py`.
+- A demo parser or server telemetry collector must first reconstruct the required player states and events.
+- Every feature must be mapped to a directly observed value, a documented derivation, or an explicitly measured approximation. Missing values must not be silently replaced with arbitrary zeros.
+- Player names and Steam identifiers are report metadata, not model features.
+- Initial operation should be delayed, offline or shadow-mode evaluation with human review.
+- Independent private-server matches are required before making claims about live performance; the frozen benchmark AUC must not be presented as live-server performance.
+
+**Next implementation milestone:**
+
+Perform a telemetry capability audit on one private-server match, then implement the smallest extractor that can produce feature-complete NPZ output and compare its feature distributions with the training pipeline before running live inference.
+
+---
+
 ## Phase 2: CS2 Server Integration
 
-> *Entries will be added when Phase 1 is complete*
+> Phase 2 begins with private-server telemetry capability auditing and offline/shadow evaluation. Live integration has not yet been implemented.
 
 ---
 

@@ -14,13 +14,13 @@
   "sha256": {
     "models/cnn_seed42.pt": "273cedbd4caf7dc5a1ad69dd5b43d044521b338ad6d4b913d7802842dd163ee7",
     "models/cnn_seed42_raw5.pt": "e2c94ab8f9b4a4139ffcf8274687d6d2ff5b6424448db660314fe6eea35dfd34",
-    "data/processed/splits.csv": "2cfd94b06e9c5db4ac7f2d4e16b2df636beca5d467da9d1c058466f6da226b63",
-    "data/processed/feature_names.json": "8137964cba6dda8f7435cccdca26c0498a4e9552c31ce701764e09daa7dfc6e0",
-    "reports/protocol.md": "05bbac6be2114ce30477c7c7e94cf314a26b88b5ab876ecd70d8f58e8f0609b9",
-    "anticheat/features.py": "4068fb059efe64c598c12c7e997d21d0fd9992a0aeb1979f47bad0006addaef1",
-    "anticheat/neural.py": "3429b4468205d6ff99aa6a165404ac2ae31440183ec30574037cee4a673b2d35",
-    "anticheat/inference.py": "24eb377d352bc1e4940976b12a76db98392834faf6b78180b1405dfefbd51460",
-    "data/raw/download_manifest.json": "a1afb03c0df79e576e4f1ef1514b2597c8a8d7a9be94cd7b89ff43697bf4dfc1"
+    "data/processed/splits.csv": "145a35566e0788fba9f9b6bdebe96c8b1f84150ac058461ca228650d1001472a",
+    "data/processed/feature_names.json": "c372b0cadae74ab24dd3b46420281588c6100168616364ac15eb1ed1b83a622d",
+    "reports/protocol.md": "d5c3d27ae8808e592af9c87022d6a78a4724093bc0bc3389e1986dd3cccdf417",
+    "anticheat/features.py": "f386c1fd249b1430d7b9125d6f9e3c2bd264648b50f8073e57964994f5128cb5",
+    "anticheat/neural.py": "533473879c740d6b49d4f804c290fb385aba746ace20befef1a7792c9e163ae9",
+    "anticheat/inference.py": "ad485637a234b27dd6ce77841848529ddbe67b76f9022fbb6572b877fbada8dd",
+    "data/raw/download_manifest.json": "50353b5351937c8905090b1ad97169b4b2008659f690936caddcae5ef79429f5"
   },
   "candidate_count": 28,
   "validation_records": 1189,

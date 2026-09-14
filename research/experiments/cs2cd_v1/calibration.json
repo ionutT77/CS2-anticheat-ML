@@ -1,5 +1,5 @@
 {
-  "selection_sha256": "3283f0ceded38e729b81e97cfc7ceaf77f52a34aa30610294e3fa35cfba13806",
+  "selection_sha256": "1d205758ae2f709079a41e22ceaa374a46205370ea276f0eb0f14e82fb579b14",
   "models": {
     "lstm5": {
       "platt": {
@@ -1739,7 +1739,7 @@
     }
   },
   "split": "calibration",
-  "evaluation_code_sha256": "315cddb7c2fadf6a3526dd9508ac7b96eaaec93f35832d5cc6acee1f4970f1ea",
+  "evaluation_code_sha256": "513d820ea7abb794666a704f63c4312b17e78f2e1107fcaa8aa18cd9d48a6807",
   "parity": {
     "lstm5": 0.0,
     "lstm39": 0.0,

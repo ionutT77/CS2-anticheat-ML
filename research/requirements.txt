@@ -8,3 +8,4 @@ pyarrow==24.0.0
 joblib==1.4.2
 requests==2.32.3
 pytest==8.3.4
+demoparser2>=0.40.0

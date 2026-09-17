@@ -489,9 +489,62 @@ Perform a telemetry capability audit on one private-server match, then implement
 
 ---
 
+### Entry 13 - Private-Server Demo Extraction and Review Pipeline
+**Date:** 2026-09-17  
+**Status:** Implemented and validated on synthetic telemetry and existing model artifacts; real-demo validation remains pending.
+
+**What was implemented:**
+
+- Completed `research/anticheat/dem_extractor.py` and `research/scripts/score_private_match.py`, building on the existing uncommitted drafts rather than replacing the trained pipeline.
+- Added `demo_timing.py` to read playback duration/ticks from Source 2 `CDemoFileInfo`. The installed `demoparser2` 0.42.0 header API does not expose these timing fields. Only verified 64 Hz input is accepted; unknown, inconsistent, unsupported, and compressed file-info timing records fail explicitly. No downsampling or guessed tick rate is used.
+- Corrected property discovery to use the documented `aim_punch_angle` vector and `fl_recoil_idx` property. The audit records resolved property mappings and null counts. Parser acceptance of a property name alone is not evidence of usable telemetry.
+- Removed draft defaults for missing feature/filter properties. Missing columns abort extraction; missing/nonfinite samples, duplicate or missing window ticks, warmup, team damage, dead participants, and round crossings reject encounters. Both participants' round histories are checked.
+- Retained 256-tick histories strictly before first damage, with a 128-tick attacker/victim burst gap. Reused the frozen feature order, angle/time helpers, and weapon sets. A synthetic Parquet comparison verifies numerical feature parity without modifying checksum-tracked `cs2_data.py` or `cs2_inference.py`.
+- Added `private_scoring.py` for checksum-verified neural event-head logits and their sigmoid scores. These are separate from the existing TCN/LightGBM player-match ensemble and calibration: event scores are **not** calibrated cheating probabilities or punishment decisions.
+- Added stable match-local attacker/victim aliases, an optional attacker scoring allowlist, explicit handling of empty consent arguments and unknown player filters, and UTF-8 reports for Windows. The default model path is resolved relative to the script, not the current directory.
+- Kept the already-added `demoparser2>=0.40.0` requirement; no additional dependencies were introduced in this continuation.
+
+**Outputs:**
+
+- `encounters.npz`: raw float32 `[N, 256, 39]`, player aliases, and encounter ticks; loadable by existing inference.
+- `encounters.json`: extraction-time audit snapshot.
+- `extraction_audit.json`: enriched audit including event metadata, aggregate rejection counts, property mappings, null counts, known approximations, and per-feature count/min/max/mean/std/zero fraction.
+- `scores.csv`: existing per-player raw and calibrated ensemble scores and review flags.
+- `encounter_scores.csv`: per-neural-component event evidence aligned to the original NPZ row, attacker, victim, weapon, and anchor tick.
+- `report.txt`: readable player/encounter evidence, raw feature summaries, rejections, warnings, and research disclaimers.
+
+**Validation and debugging evidence:**
+
+- Initial extractor baseline: **24 passed, 1 failed**. The failure was an off-by-one test assertion: the yaw transition created by the fixture is at index 128, not 127. Corrected the assertion without changing feature math.
+- Final complete research suite: **218 passed, 5 warnings** using the existing Python 3.11 virtual environment, with the working directory set to `research`.
+- Tests cover parser property/event boundaries through mocks; Source 2 framing/timing via synthetic files; missing/nonfinite telemetry; event causality; duplicate ticks; consent and aliases; rejection rules; frozen-Parquet feature parity; NPZ export; extraction-to-existing-model integration; neural score alignment and artifact checksums; UTF-8 reports; and existing example score regression.
+- `score_private_match.py --help` and `git diff --check` passed.
+- Running tests from the repository root without configuring the research import path produces `ModuleNotFoundError: anticheat`. The documented `research` working directory resolves it. The public extractor entry point is `extract_dem`, not `extract_demo`.
+- All five warnings concern a saved scikit-learn 1.6.1 `LabelEncoder` loaded under installed scikit-learn 1.9.0. Regression results passed, but that is not a guarantee of cross-version artifact compatibility. The environment was not upgraded or downgraded.
+
+**Safety and interpretation:**
+
+- Offline, authorized private-server shadow/review only; no server communication or ban/kick APIs.
+- All participants must consent to telemetry use. `--consent-ids` filters attackers being scored; it does not prevent parsing victim telemetry or constitute proof of consent. An explicit empty programmatic allowlist scores nobody.
+- Original Steam IDs remain in private audit player metadata; they are not features or public score identifiers. Demo/header/audit files can contain identifying metadata and should not be published without review.
+- Eye height, flash-duration decay, and footstep audibility/visibility limits are inherited approximations. The capability matrix is a hypothesis supported by documented properties and synthetic parity, **not a completed real-demo capability audit**.
+- The frozen benchmark ROC-AUC near 0.973 is neither 97.3% accuracy nor evidence of private-server performance. No automatic guilt or punishment decision is made.
+
+**Remaining work:**
+
+1. Supply a consenting private-server GOTV `.dem`; no real demo was present in this workspace, so actual parser compatibility and recording cadence have not been validated.
+2. Check required properties and event availability, timing, rejection rates, feature distributions, and report contents on a real recording. A usable encounter needs at least 256 contiguous pre-impact ticks; a very short record cannot validate encounter extraction.
+3. Compressed `CDemoFileInfo` is currently unsupported and rejected. This limitation must be resolved if encountered rather than silently assuming 64 Hz.
+4. Raw feature summaries are exported but not automatically compared against the transformed training normalization. Perform a correctly scaled distribution comparison before drawing model conclusions.
+5. Rejections are counted by reason rather than logged individually for every discarded event. No measured private-server false-positive rate or deployment-readiness claim is available yet.
+
+**Version control:** All changes remain local and uncommitted. Nothing was pushed to GitHub.
+
+---
+
 ## Phase 2: CS2 Server Integration
 
-> Phase 2 begins with private-server telemetry capability auditing and offline/shadow evaluation. Live integration has not yet been implemented.
+> Offline private-server extraction and reporting are implemented with synthetic and saved-model validation. Real GOTV validation and live integration have not yet been completed.
 
 ---
 

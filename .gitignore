@@ -33,6 +33,7 @@ data/processed/*
 *.hdf5
 *.parquet
 *.csv
+*.dem
 !requirements.txt
 
 # ─── Model Checkpoints & Outputs ─────────────────────────────────────────────

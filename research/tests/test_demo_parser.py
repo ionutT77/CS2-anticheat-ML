@@ -19,7 +19,8 @@ def parser_boundary(monkeypatch):
     state = {
         'ticks': ticks, 'header': {'map_name': 'synthetic'},
         'timing': {'playback_ticks': 640, 'playback_time': 10., 'timing_source': 'mock'},
-        'events': {}, 'unavailable': set(), 'failed_events': set(), 'requests': [],
+        'events': {}, 'unavailable': set(), 'probe_only': set(),
+        'failed_events': set(), 'requests': [],
     }
 
     class DemoParser:
@@ -31,11 +32,17 @@ def parser_boundary(monkeypatch):
 
         def parse_ticks(self, props, ticks=None):
             state['requests'].append((props, ticks))
-            if set(props) & state['unavailable']:
-                raise ValueError('Unsupported property')
+            # The real parser silently drops unknown names instead of raising.
+            # 'unavailable': never returned; 'probe_only': returned by the
+            # probe but dropped from full-timeline output.
+            available = [prop for prop in props
+                         if prop in state['ticks'].columns
+                         and prop not in state['unavailable']]
             if ticks is not None:
-                return pd.DataFrame(columns=['tick', 'steamid', *props])
-            return state['ticks'].copy()
+                return pd.DataFrame(columns=['tick', 'steamid', *available])
+            frame = state['ticks'].copy()
+            dropped = state['unavailable'] | state['probe_only']
+            return frame.drop(columns=[prop for prop in dropped if prop in frame.columns])
 
         def list_game_events(self):
             return list(state['events'])
@@ -99,16 +106,28 @@ def test_invalid_id_rows_and_events_are_skipped(parser_boundary, invalid_id):
     assert hurt == []
 
 
-@pytest.mark.parametrize('property_name', ['health', 'is_warmup_period', 'aim_punch_angle'])
+@pytest.mark.parametrize('property_name', ['health', 'is_warmup_period'])
 def test_unavailable_property_fails_without_defaults(parser_boundary, property_name):
     parser_boundary['unavailable'] = set(dict(dem_extractor._PROP_CANDIDATES)[property_name])
-    with pytest.raises(ValueError, match='Required tick properties unavailable'):
+    with pytest.raises(ValueError, match='missing required columns|Required tick properties'):
         _parse()
 
 
-@pytest.mark.parametrize('property_name', ['health', 'is_warmup_period', 'aim_punch_angle', 'tick', 'steamid'])
+def test_aim_punch_angle_absent_is_documented_approximation(parser_boundary):
+    """demoparser2 0.42.0 drops aim_punch_angle on some demos; must not abort."""
+    parser_boundary['unavailable'] = {'aim_punch_angle'}
+    players, _, header, warnings, approximated = _parse()
+    state = players['76561198000000001']
+    np.testing.assert_array_equal(state['punch_0'], [0., 0., 0.])
+    np.testing.assert_array_equal(state['punch_1'], [0., 0., 0.])
+    assert header['null_counts']['aim_punch_angle'] == 3
+    assert approximated == ['punch_pitch', 'punch_yaw']
+    assert any('documented approximation' in warning for warning in warnings)
+
+
+@pytest.mark.parametrize('property_name', ['health', 'is_warmup_period', 'tick', 'steamid'])
 def test_missing_output_column_fails_even_if_probe_succeeds(parser_boundary, property_name):
-    parser_boundary['ticks'] = parser_boundary['ticks'].drop(columns=property_name)
+    parser_boundary['probe_only'] = {property_name}
     with pytest.raises(ValueError, match='missing required columns'):
         _parse()
 
@@ -217,9 +236,10 @@ def test_unordered_events_and_future_events_are_causal(parser_boundary):
 def test_property_alias_fallback(parser_boundary):
     parser_boundary['unavailable'] = {'aim_punch_angle'}
     parser_boundary['ticks'] = parser_boundary['ticks'].rename(
-        columns={'aim_punch_angle': 'CCSPlayerPawn.m_aimPunchAngle'})
+        columns={'aim_punch_angle': 'CCSPlayerPawn.CCSPlayer_AimPunchServices.m_predictableBaseAngle'})
     players, _, header, _, _ = _parse()
-    assert header['property_mapping']['aim_punch_angle'] == 'CCSPlayerPawn.m_aimPunchAngle'
+    assert (header['property_mapping']['aim_punch_angle']
+            == 'CCSPlayerPawn.CCSPlayer_AimPunchServices.m_predictableBaseAngle')
     np.testing.assert_array_equal(players['76561198000000001']['punch_1'], [10, 20, 30])
 
 

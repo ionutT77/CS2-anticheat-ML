@@ -69,9 +69,6 @@ _PROP_CANDIDATES = [
     ('Z',                   ['Z']),
     ('pitch',               ['pitch']),
     ('yaw',                 ['yaw']),
-    ('velocity_X',          ['velocity_X']),
-    ('velocity_Y',          ['velocity_Y']),
-    ('velocity_Z',          ['velocity_Z']),
     ('health',              ['health']),
     ('armor_value',         ['armor_value']),
     ('is_alive',            ['is_alive']),
@@ -83,10 +80,21 @@ _PROP_CANDIDATES = [
     ('is_airborne',         ['is_airborne']),
     ('shots_fired',         ['shots_fired', 'm_iShotsFired']),
     ('fl_recoil_idx',       ['fl_recoil_idx', 'm_flRecoilIndex']),
-    ('aim_punch_angle',     ['aim_punch_angle', 'CCSPlayerPawn.m_aimPunchAngle']),
+    # CS2 moved pawn aim punch into AimPunchServices; m_predictableBaseAngle
+    # is the closest exposed equivalent of the training pipeline's
+    # m_aimPunchAngle.  Verified against demoparser2 0.42.0 on a real demo.
+    ('aim_punch_angle',     ['aim_punch_angle',
+                             'CCSPlayerPawn.CCSPlayer_AimPunchServices.m_predictableBaseAngle',
+                             'CCSPlayerPawn.m_aimPunchAngle']),
     ('is_warmup_period',    ['is_warmup_period', 'm_bWarmupPeriod']),
     ('total_rounds_played', ['total_rounds_played']),
 ]
+
+# velocity_X/Y/Z are not networked in 2026 GOTV demos (verified: none of the
+# 968 updated fields is a pawn velocity vector).  They are derived per player
+# from consecutive recorded positions at the verified 64 Hz tick rate, the
+# same forward-difference quantity the networked value represents.
+_DERIVED_FROM_POSITION = ('velocity_X', 'velocity_Y', 'velocity_Z')
 
 # Missing feature and filter properties must never be replaced with defaults.
 _REQUIRED_PROPS = frozenset(name for name, _ in _PROP_CANDIDATES)
@@ -109,40 +117,64 @@ def _event_ticks(values, context):
 
 # ── Parsing layer (demoparser2 only) ─────────────────────────────────────
 
+def _normalized(name):
+    """Lowercase alphanumerics only, after dropping a leading ``m_`` prefix."""
+    return ''.join(character for character in name.lower().removeprefix('m_')
+                   if character.isalnum())
+
+
+def _requested_column(frame, internal, requested):
+    """Return the column the parser actually returned for one property.
+
+    demoparser2 silently drops unknown property names instead of raising,
+    so acceptance must be judged by the returned columns, not by the call.
+    Names may be entity-qualified (``CCSPlayerPawn.m_aimPunchAngle``).
+    """
+    if requested in frame.columns:
+        return requested
+    target = _normalized(internal)
+    for column in frame.columns:
+        if _normalized(column.rsplit('.', 1)[-1]) == target:
+            return column
+    return None
+
+
 def _resolve_props(parser):
     """Discover which demoparser2 property names work.
 
-    Returns (request_list, rename_dict, missing_list).
+    A property counts as found only if its column appears in the probed
+    DataFrame.  Returns (request_list, rename_dict, missing_list).
     """
-    request, rename, missing = [], {}, []
-    # Try batch first with primary names
-    primary = [candidates[0] for _, candidates in _PROP_CANDIDATES]
-    internal = [name for name, _ in _PROP_CANDIDATES]
+    resolved = {}
     try:
-        parser.parse_ticks(primary, ticks=[0])
-        for iname, cand in zip(internal, primary):
-            request.append(cand)
-            if cand != iname:
-                rename[cand] = iname
-        return request, rename, []
+        frame = parser.parse_ticks([candidates[0] for _, candidates in _PROP_CANDIDATES], ticks=[0])
+        for internal, candidates in _PROP_CANDIDATES:
+            column = _requested_column(frame, internal, candidates[0])
+            if column is not None:
+                resolved[internal] = column
     except Exception:
         pass
-
-    # Fallback: probe each property individually
-    for iname, candidates in _PROP_CANDIDATES:
-        found = False
+    # Probe properties the batch request could not resolve, one at a time.
+    for internal, candidates in _PROP_CANDIDATES:
+        if internal in resolved:
+            continue
         for cand in candidates:
             try:
-                parser.parse_ticks([cand], ticks=[0])
-                request.append(cand)
-                if cand != iname:
-                    rename[cand] = iname
-                found = True
-                break
+                column = _requested_column(parser.parse_ticks([cand], ticks=[0]), internal, cand)
             except Exception:
                 continue
-        if not found:
-            missing.append(iname)
+            if column is not None:
+                resolved[internal] = column
+                break
+    request, rename = [], {}
+    for internal, _ in _PROP_CANDIDATES:
+        if internal not in resolved:
+            continue
+        column = resolved[internal]
+        request.append(column)
+        if column != internal:
+            rename[column] = internal
+    missing = [name for name, _ in _PROP_CANDIDATES if name not in resolved]
     return request, rename, missing
 
 
@@ -209,7 +241,7 @@ def parse_demo(dem_path, prop_map=None):
             if iname in missing:
                 missing.remove(iname)
 
-    if missing:
+    if missing and missing != ['aim_punch_angle']:
         raise ValueError(f'Required tick properties unavailable: {sorted(missing)}. '
                          'No feature defaults or disabled filters are allowed; check prop_map.')
     if len(set(request)) != len(request):
@@ -218,8 +250,22 @@ def parse_demo(dem_path, prop_map=None):
     log.info('Parsing %d tick properties from %s.', len(request), dem_path.name)
     tick_df = parser.parse_ticks(request).rename(columns=rename)
     missing_columns = (_REQUIRED_PROPS | {'tick', 'steamid'}) - set(tick_df.columns)
-    if missing_columns:
+    if missing_columns - {'aim_punch_angle'}:
         raise ValueError(f'Tick DataFrame missing required columns: {sorted(missing_columns)}')
+    if 'aim_punch_angle' not in tick_df.columns:
+        # Known demoparser2 0.42.0 limitation on some demos: aim punch is not
+        # exposed under its documented names.  Substituting zeros is a
+        # documented approximation (punch features and their knock-on yaw/
+        # pitch deltas), recorded in warnings and the audit trail.
+        msg = ("Property 'aim_punch_angle' unavailable in this demo - punch_pitch/"
+               'punch_yaw filled with 0; a documented approximation, not silent defaults.')
+        warnings.append(msg)
+        approximated.extend(['punch_pitch', 'punch_yaw'])
+        log.warning(msg)
+        punch_column_missing = True
+        tick_df['aim_punch_angle'] = None
+    else:
+        punch_column_missing = False
     header['property_mapping'] = {rename.get(name, name): name for name in request}
     header['null_counts'] = {name: int(tick_df[name].isna().sum())
                              for name in sorted(_REQUIRED_PROPS | {'tick', 'steamid'})}
@@ -232,6 +278,9 @@ def parse_demo(dem_path, prop_map=None):
               for name in numeric_cols}
     arrays['tick'] = _event_ticks(tick_df['tick'].to_numpy(), 'demo telemetry')
     for component in range(2):
+        if punch_column_missing:
+            arrays[f'punch_{component}'] = np.zeros(len(tick_df), dtype=np.float32)
+            continue
         arrays[f'punch_{component}'] = np.array([
             punch[component] if isinstance(punch, (list, tuple, np.ndarray)) and len(punch) >= 2
             else np.nan for punch in tick_df['aim_punch_angle']

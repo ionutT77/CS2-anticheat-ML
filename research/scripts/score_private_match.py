@@ -130,6 +130,7 @@ def format_report(audit, scores, output_dir, encounter_scores=()):
     lines.append('  encounter_scores.csv    — uncalibrated neural event-head evidence')
     lines.append('  extraction_audit.json   — extraction log and raw feature statistics')
     lines.append('  report.txt              — this report')
+    lines.append('  simple_report.txt       — simplified non-technical player verdicts')
     lines.append('')
 
     lines.append('─' * 80)
@@ -138,6 +139,64 @@ def format_report(audit, scores, output_dir, encounter_scores=()):
     lines.append('accuracy, nor does it predict performance on this private server.')
     lines.append('Interpret all scores as exploratory research results.')
     lines.append('─' * 80)
+    return '\n'.join(lines)
+
+
+def format_simple_report(audit, scores, encounter_scores, sid_to_name, extreme_thresh, ban_ratio, sus_ratio):
+    lines = []
+    
+    # Organize encounters by player
+    player_encs = {}
+    for enc in encounter_scores:
+        p = enc['player']
+        if p not in player_encs:
+            player_encs[p] = []
+        player_encs[p].append(enc)
+    
+    # Map local_id to name
+    lid_to_name = {}
+    for p in audit.get('players', []):
+        sid = p['steamid']
+        name = sid_to_name.get(str(sid), "Unknown")
+        lid_to_name[p['local_id']] = name
+
+    for row in scores:
+        p = row['player']
+        name = lid_to_name.get(p, "Unknown")
+        encs = player_encs.get(p, [])
+        total_shots = len(encs)
+        
+        encs = sorted(encs, key=lambda x: x['tick'])
+        
+        extreme_shots = [e for e in encs if e['event_score'] >= extreme_thresh]
+        num_extreme = len(extreme_shots)
+        
+        flagged_shots = [e for e in encs if e['event_score'] >= 0.5]
+        num_flagged = len(flagged_shots)
+        
+        ratio = num_extreme / total_shots if total_shots > 0 else 0.0
+        flagged_ratio = num_flagged / total_shots if total_shots > 0 else 0.0
+        conf_pct = int(row['calibrated_score'] * 100)
+        
+        if ratio >= ban_ratio and num_extreme >= 3:
+            status = "He is for sure cheating - insta ban"
+        elif flagged_ratio >= sus_ratio or row.get('flag_accuracy') or row.get('flag_f1'):
+            status = "suspicious - manual review needed"
+        else:
+            status = "clean"
+            
+        lines.append(f'{p}: "{status}, confidence score {conf_pct} %" - {name}')
+        
+        if status != "clean" and total_shots > 0:
+            lines.append("All shots analysed:")
+            for e in encs:
+                tag = "🔴 EXTREME" if e['event_score'] >= extreme_thresh else ("🟡 Suspicious" if e['event_score'] >= 0.5 else "⚪ Normal")
+                v_name = lid_to_name.get(e['victim'], e['victim'])
+                lines.append(f"  - Tick {e['tick']:>7} vs {v_name:<15} | Weapon: {e['weapon']:<8} | Score: {e['event_score']:.4f} {tag}")
+            lines.append("")
+        else:
+            lines.append("")
+            
     return '\n'.join(lines)
 
 
@@ -159,6 +218,12 @@ def main():
     ap.add_argument('--device', choices=['cpu', 'cuda'], default='cpu')
     ap.add_argument('--prop-map', type=Path,
                     help='JSON file mapping internal property names to demoparser2 names.')
+    ap.add_argument('--ban-ratio', type=float, default=0.7,
+                    help='Ratio of extreme shots to total to trigger insta-ban (default: 0.7)')
+    ap.add_argument('--sus-ratio', type=float, default=0.35,
+                    help='Ratio of flagged (>=0.5) shots to trigger manual review (default: 0.35)')
+    ap.add_argument('--extreme-threshold', type=float, default=0.85,
+                    help='Threshold for individual shot to be extreme (default: 0.85)')
     args = ap.parse_args()
     if args.consent_ids is not None and not args.consent_ids:
         ap.error('--consent-ids received no Steam64 IDs; pass IDs or omit the flag.')
@@ -235,10 +300,27 @@ def main():
     audit_dst = args.output / 'extraction_audit.json'
     audit_dst.write_text(json.dumps(audit, indent=2, ensure_ascii=False, allow_nan=False), encoding='utf-8')
 
+    sid_to_name = {}
+    try:
+        from demoparser2 import DemoParser
+        pi = DemoParser(str(args.demo)).parse_player_info()
+        sid_to_name = {str(r['steamid']): r['name'] for _, r in pi.iterrows()}
+    except Exception as e:
+        logging.warning(f"Could not parse player names from demo: {e}")
+
     report = format_report(audit, scores, args.output, encounter_scores)
     report_path = args.output / 'report.txt'
     report_path.write_text(report, encoding='utf-8')
+    
+    simple_report = format_simple_report(audit, scores, encounter_scores, sid_to_name, args.extreme_threshold, args.ban_ratio, args.sus_ratio)
+    simple_report_path = args.output / 'simple_report.txt'
+    simple_report_path.write_text(simple_report, encoding='utf-8')
+
     print(report)
+    print("\n" + "="*80)
+    print("  SIMPLIFIED REPORT (simple_report.txt)")
+    print("="*80 + "\n")
+    print(simple_report)
 
 
 if __name__ == '__main__':

@@ -79,10 +79,11 @@ _PROP_CANDIDATES = [
     ('duck_amount',         ['duck_amount', 'm_flDuckAmount']),
     ('is_airborne',         ['is_airborne']),
     ('shots_fired',         ['shots_fired', 'm_iShotsFired']),
-    ('fl_recoil_idx',       ['fl_recoil_idx', 'm_flRecoilIndex']),
+    # GOTV demos expose m_flRecoilIndex (verified demoparser2 0.42.0).
+    ('fl_recoil_idx',       ['m_flRecoilIndex', 'fl_recoil_idx']),
     # CS2 moved pawn aim punch into AimPunchServices; m_predictableBaseAngle
     # is the closest exposed equivalent of the training pipeline's
-    # m_aimPunchAngle.  Verified against demoparser2 0.42.0 on a real demo.
+    # m_aimPunchAngle.  May not be present in all GOTV demos.
     ('aim_punch_angle',     ['aim_punch_angle',
                              'CCSPlayerPawn.CCSPlayer_AimPunchServices.m_predictableBaseAngle',
                              'CCSPlayerPawn.m_aimPunchAngle']),
@@ -90,13 +91,16 @@ _PROP_CANDIDATES = [
     ('total_rounds_played', ['total_rounds_played']),
 ]
 
-# velocity_X/Y/Z are not networked in 2026 GOTV demos (verified: none of the
-# 968 updated fields is a pawn velocity vector).  They are derived per player
-# from consecutive recorded positions at the verified 64 Hz tick rate, the
-# same forward-difference quantity the networked value represents.
+# velocity_X/Y/Z are NOT networked in GOTV/SourceTV demos (verified against
+# demoparser2 0.42.0 and multiple live CS2 match demos: every velocity name
+# variant returns only tick/steamid/name columns with no data).  They are
+# derived per player from consecutive recorded positions at the verified
+# 64 Hz tick rate: v[t] = (pos[t] - pos[t-1]) * TICK_RATE.
+# For the first tick in each player's recording v = 0 (forward difference).
 _DERIVED_FROM_POSITION = ('velocity_X', 'velocity_Y', 'velocity_Z')
 
 # Missing feature and filter properties must never be replaced with defaults.
+# velocity_X/Y/Z are excluded because they are always derived, not parsed.
 _REQUIRED_PROPS = frozenset(name for name, _ in _PROP_CANDIDATES)
 
 
@@ -291,9 +295,9 @@ def parse_demo(dem_path, prop_map=None):
 
     # ── Parse events ──────────────────────────────────────────────────
     shots, steps, blinds = defaultdict(list), defaultdict(list), defaultdict(list)
-    event_names = ['player_hurt', 'weapon_fire', 'player_footstep', 'player_blind']
     raw_events = {}
     available_events = set(parser.list_game_events())
+    event_names = ['player_hurt', 'weapon_fire', 'player_footstep', 'player_blind']
     required_event_columns = {
         'player_hurt': {'tick', 'attacker_steamid', 'user_steamid', 'weapon'},
         'weapon_fire': {'tick', 'user_steamid', 'weapon'},
@@ -309,8 +313,18 @@ def parse_demo(dem_path, prop_map=None):
             frame = parser.parse_event(name)
         except Exception as exc:
             raise ValueError(f'Required event {name!r} could not be parsed.') from exc
+        # CS2 GOTV/PBDEMS2 demos: demoparser2 returns an empty list (not a DataFrame)
+        # for events that appear in the event inventory but contain no recorded data.
+        # Treat this the same as absent — these events weren't written to the demo.
+        if isinstance(frame, list):
+            raw_events[name] = None
+            warnings.append(
+                f'Event {name!r} listed but returned a list (GOTV recording gap); '
+                f'treated as absent.'
+            )
+            continue
         required = required_event_columns[name]
-        if frame is None or not required.issubset(frame.columns):
+        if frame is None or not hasattr(frame, 'columns') or not required.issubset(frame.columns):
             raise ValueError(f'Required event columns unavailable for {name!r}.')
         identity_columns = required & {'user_steamid', 'attacker_steamid'}
         for column in identity_columns:
@@ -358,6 +372,19 @@ def parse_demo(dem_path, prop_map=None):
         ix = ix[order]
         p = {k: arr[ix] for k, arr in arrays.items()}
         p['weapon'] = weapons[ix]
+
+        # Derive velocity from consecutive position differences.
+        # v[t] = (pos[t] - pos[t-1]) * TICK_RATE; v[0] = 0 (forward difference).
+        # This approximates the networked m_vecVelocity, which is absent in GOTV.
+        for axis, pos_key in (('velocity_X', 'X'), ('velocity_Y', 'Y'), ('velocity_Z', 'Z')):
+            pos = p[pos_key].astype(np.float32)
+            vel = np.empty_like(pos)
+            vel[0] = 0.0
+            vel[1:] = (pos[1:] - pos[:-1]) * float(TICK_RATE)
+            # Clamp to plausible CS2 speed range (max bhop ~4000 u/s)
+            vel = np.clip(vel, -5000.0, 5000.0)
+            p[axis] = vel
+
         p['shot'] = np.isin(p['tick'], shots.get(player, [])).astype(np.float32)
         p['footstep'] = np.isin(p['tick'], steps.get(player, [])).astype(np.float32)
         p['since_shot'] = time_since(p['tick'], shots.get(player, []))
@@ -470,6 +497,7 @@ def build_encounters(players, hurt_events, consent_players=None):
         a, v = ps
         required = (_REQUIRED_PROPS - {'active_weapon_name', 'aim_punch_angle'}) | {
             'punch_0', 'punch_1', 'weapon', 'shot', 'footstep', 'since_shot', 'since_noise', 'flash',
+            'velocity_X', 'velocity_Y', 'velocity_Z',  # always derived from positions
         }
         if any(not required.issubset(state) for state in ps):
             rejected['missing_telemetry'] += 1

@@ -107,13 +107,22 @@ def test_wrap_boundary_values():
 
 
 def test_yaw_wrap_in_features():
-    """A yaw change across the ±180 boundary must wrap correctly."""
+    """A yaw change across the ±180 boundary must wrap correctly.
+
+    np.diff(a, prepend=a[:1]) produces diff[0]=0 (self-difference).
+    Player array: ticks 1..300; yaw[0..127]=179 (ticks 1..128),
+    yaw[128..299]=-179 (ticks 129..300).
+
+    The 256-tick window covers ticks 1..256 → window indices 0..255.
+      window[127] = tick 128, yaw=179
+      window[128] = tick 129, yaw=-179
+    So delta_yaw[128] = wrap(-179 - 179) = wrap(-358) = +2.
+    """
     players, events = _standard_fixture()
-    # Attacker yaw crosses ±180 boundary at tick 129.
-    players['A']['yaw'][:128] = 179.
-    players['A']['yaw'][128:] = -179.
+    players['A']['yaw'][:128] = 179.   # ticks 1..128
+    players['A']['yaw'][128:] = -179.  # ticks 129..300
     x, _, _, _ = build_encounters(players, events)
-    # Index 128 is tick 129: 179→-179 wraps to +2.
+    # The wrap-crossing delta appears at window index 128, not 127.
     assert x[0, 128, 0] == pytest.approx(2.0, abs=1e-5)
 
 

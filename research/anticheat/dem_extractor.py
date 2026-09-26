@@ -143,15 +143,40 @@ def _requested_column(frame, internal, requested):
     return None
 
 
+def _find_probe_tick(parser):
+    """Return the first tick that contains actual player rows.
+
+    Some demo formats (e.g. FACEIT SourceTV) have no player data at tick 0.
+    Probing an empty tick causes all properties to appear missing.  We fetch
+    the minimum tick present in a cheap single-property parse and fall back to
+    tick 1 if that also fails.
+    """
+    for probe_prop in ('X', 'health', 'is_alive'):
+        try:
+            df = parser.parse_ticks([probe_prop])
+            if 'tick' in df.columns and len(df) > 0:
+                min_tick = int(df['tick'].min())
+                if min_tick >= 0:
+                    return max(min_tick, 1)
+        except Exception:
+            continue
+    return 1
+
+
 def _resolve_props(parser):
     """Discover which demoparser2 property names work.
 
     A property counts as found only if its column appears in the probed
     DataFrame.  Returns (request_list, rename_dict, missing_list).
+
+    Uses the first tick that actually contains player data rather than tick 0,
+    so that FACEIT and other SourceTV demos (which have no rows at tick 0) are
+    handled correctly.
     """
+    probe_tick = _find_probe_tick(parser)
     resolved = {}
     try:
-        frame = parser.parse_ticks([candidates[0] for _, candidates in _PROP_CANDIDATES], ticks=[0])
+        frame = parser.parse_ticks([candidates[0] for _, candidates in _PROP_CANDIDATES], ticks=[probe_tick])
         for internal, candidates in _PROP_CANDIDATES:
             column = _requested_column(frame, internal, candidates[0])
             if column is not None:
@@ -164,7 +189,7 @@ def _resolve_props(parser):
             continue
         for cand in candidates:
             try:
-                column = _requested_column(parser.parse_ticks([cand], ticks=[0]), internal, cand)
+                column = _requested_column(parser.parse_ticks([cand], ticks=[probe_tick]), internal, cand)
             except Exception:
                 continue
             if column is not None:

@@ -187,7 +187,7 @@ def format_simple_report(audit, scores, encounter_scores, sid_to_name, extreme_t
             
         lines.append(f'{p}: "{status}, confidence score {conf_pct} %" - {name}')
         
-        if status != "clean" and total_shots > 0:
+        if total_shots > 0:
             lines.append("All shots analysed:")
             for e in encs:
                 tag = "🔴 EXTREME" if e['event_score'] >= extreme_thresh else ("🟡 Suspicious" if e['event_score'] >= 0.5 else "⚪ Normal")

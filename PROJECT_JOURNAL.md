@@ -819,6 +819,29 @@ python -m pytest tests/ -q
 
 ---
 
+### ML Anti-Cheat Project: Current Challenges & Next Steps
+
+Hello, I would like to discuss the following ongoing issues and next steps regarding the ML Anti-Cheat project:
+
+1. **AWP Flick Shots (False Positives)**
+   The model currently flags most AWP shots as suspect. Because the AWP requires rapid flicking motions, these legitimate, high-velocity crosshair movements are being misinterpreted by the model as aimbot-like behavior.
+
+2. **Silent Aim and Micro-Adjustments**
+   While the model successfully detects standard aimbot patterns, it struggles to identify "silent aim" or low-FOV cheats. These cheats use very small micro-adjustments to the crosshair which currently blend in with normal player movements and bypass our detection.
+
+3. **Bunnyhop (Bhop) Detection Implementation**
+   We need to outline the next steps and technical requirements for implementing a reliable bunnyhop script detection module to expand the anti-cheat's capabilities.
+
+4. **Impact of Real-Time Server Infrastructure**
+   I am planning to implement real-time detection using a self-hosted dedicated server with CounterStrikeSharp. A key question is whether migrating to this direct data-gathering method will provide higher quality/frequency data that could naturally resolve the AWP and Silent Aim issues mentioned above.
+
+5. **Computer Vision / Image Processing Integration**
+   Based on a recent video by Haix ("[AI Overwatch Vs CS2 Cheaters - Who Wins?](https://www.youtube.com/watch?v=nGGI3-Fm8tc)"), I am exploring the feasibility of integrating Image Process Recognition into our anti-cheat. I would like to discuss if implementing such a system is viable in terms of cost and performance, and how we might combine it with our current telemetry-based approach. 
+   
+   He says in the video that this type of approach requires a lot of money. And by using img processing, he can detect also wallhack. I think on the actual approach you cannot detect wallhack not even that type of wallhack where you clearly look through the walls, because i don't think we can have a flag feature that states there is a wall there when the crosshair is pointing exactly to the enemy player and also the model records only kills (in a small window of ticks).
+
+---
+
 ## Appendix: Technology Stack
 
 | Component | Technology | Purpose |

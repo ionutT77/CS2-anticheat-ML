@@ -1097,6 +1097,40 @@ Compared with training normalization, 22 of 39 features are within 0.25 training
 
 ---
 
+### Entry 23 — Real-Time Phase 3: Live Listener and First Live Session
+**Date:** 2026-10-11
+**Status:** Working end to end on a live server. Review signals only.
+
+**What was built:**
+
+- `research/realtime/live_scoring.py`: follows the growing capture and keeps a rolling buffer of about 32 s. When a hit becomes resolvable (its health drop is visible), it builds windows with the Phase 2 code and scores new encounters with the existing checksum-verified functions:
+  - player-match score: `cs2_inference.predict` over all of that player's encounters so far, with the calibrated score and policy flags;
+  - per-encounter evidence: `private_scoring.predict_encounters` event score.
+
+  It prints one line per encounter and appends to a JSONL log. A `--replay` mode runs a finished capture through the same path.
+- **Display rule:** flags are marked *provisional* below 10 encounters, because thresholds were calibrated on full matches (CS2CD: AUC 0.834 after 1 encounter vs 0.973 for full matches). Thresholds were **not** changed.
+- `start_server.ps1`: `-BotDifficulty` (default 2 = hard).
+- `research/realtime/server/README.md`: live-scoring usage and a note on demo recording.
+
+**Tests:** new `tests/test_live_scoring.py`, 5 tests: live windows equal batch windows at 3 chunk sizes; no encounter before its health drop is visible; each encounter emitted once; partial last line held back; a real model call on a live window. Realtime test files: 29 passed.
+
+**Replay of the 8-round session (Entry 21):** 51/51 encounters, with anchor ticks identical to the Phase 2 batch build. Processing took a median 0.6 s per encounter, p90 0.9 s, max 1.4 s; the first took 6.7 s because the model loads cold. The player-match score fell from 0.79 after 1 encounter to 0.23 after 10 and 0.16 after 51, which shows why early flags are provisional.
+
+**First live session (author vs 8 hard bots, de_dust2):**
+
+- Bots were active this time: moving 45% of alive ticks, 84 shots, 24 hits on each other in the first minutes. The bots in Entry 22 were passive.
+- 18 encounters were scored live (M4A1 7, AWP 6, P2000 3, Glock 2). Processing took a median 0.40 s, p90 0.59 s, max 0.61 s; the first took 4.2 s (model load). The end-to-end delay also includes up to about 1 s of plugin flush, which was not measured.
+- Player-match score: 0.734 after 1 encounter (provisional flags), 0.093 after 10, and 0.117 after 18. **No non-provisional flags were raised.**
+- Encounter scores had a median of 0.031; 1 of 18 was ≥ 0.5 (the first, a P2000 hit). The AWP hits scored 0.02–0.47, lower than the pro AWP flicks in Entry 14.
+
+**Interpretation limits:** one legitimate player, one short session, and bot victims (out of distribution: training never had bots). This shows the pipeline works live with sub-second processing. It is **not** a measurement of precision, recall or false-positive rate; that needs labelled human sessions (Phase 4).
+
+**Found during the session:** `mp_warmup_end` and `mp_restartgame` appear to cut GOTV auto-recording short (this session's demo kept 12.4 s), so there is no demo parity for this session. Documented in the server README.
+
+**Next:** Phase 4: session logging (dataset, plugin and code versions, threshold source), a written consent procedure, and evaluation only against verified labels.
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

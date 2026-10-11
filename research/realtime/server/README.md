@@ -68,6 +68,28 @@ After that, `rcon <command>` runs a command on the server. Useful commands:
 Stop the server with `tv_stoprecord` first, then `quit`. Don't close the window or end the
 process: that can lose the GOTV demo.
 
+`mp_warmup_end` and `mp_restartgame` appear to cut the automatic GOTV recording short (a
+session that used them kept only 12 s of demo). If you need the demo for a parity check,
+avoid those two, or start a new recording afterwards with `rcon tv_record <name>`.
+
+## Live scoring (Phase 3)
+
+With the server running, from the `research` folder:
+
+```powershell
+..\venv\Scripts\python.exe -I -W ignore -u realtime\live_scoring.py "D:\cs2server\game\csgo\addons\counterstrikesharp\plugins\AnticheatTelemetry" --include-bot-victims
+```
+
+- It follows the newest capture and prints one line per encounter: attacker, victim, weapon,
+  encounter score, player-match score, review flags, processing delay.
+- `--include-bot-victims` is needed when the opponents are bots (pipeline testing only).
+- Flags are marked *provisional* below 10 encounters.
+- The log is written to `local_runs\live_scores.jsonl` (change with `--log`).
+- Stop it with Ctrl+C.
+- To re-run a finished capture: add `--replay` and give the capture file.
+
+Scores are review signals calibrated on CS2CD, not cheating verdicts.
+
 If the in-game `rcon` commands are rejected, tell the project maintainer. The RCON path
 through the in-game console is not yet tested.
 

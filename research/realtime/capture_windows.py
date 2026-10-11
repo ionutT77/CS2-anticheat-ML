@@ -99,8 +99,17 @@ def _state_change_tick(p, start, changed):
 
 
 def build_from_capture(path, include_bot_victims=False, velocity='logged', attackers=None):
-    """Return (x, meta, local_map, audit) for one capture."""
+    """Return (x, meta, local_map, audit) for one capture file."""
     header, states, events = read_capture(path)
+    x, meta, local_map, audit = build_from_rows(header, states, events, include_bot_victims,
+                                                velocity, attackers)
+    audit['capture'] = str(path)
+    return x, meta, local_map, audit
+
+
+def build_from_rows(header, states, events, include_bot_victims=False, velocity='logged',
+                    attackers=None):
+    """Same as build_from_capture, on already-parsed rows (used by the live listener)."""
     problems = validate(header, states, events)
     owners = _owners(states, include_bot_victims)
 
@@ -164,7 +173,7 @@ def build_from_capture(path, include_bot_victims=False, velocity='logged', attac
 
     x, meta, local_map, audit = build_encounters(players, hurts, consent_players=scored)
     audit.update({
-        'capture': str(path), 'plugin': header.get('plugin'), 'schema': header.get('schema'),
+        'plugin': header.get('plugin'), 'schema': header.get('schema'),
         'truncated_tail': header.get('truncated_tail'), 'schema_problems': problems[:10],
         'velocity_source': velocity, 'include_bot_victims': include_bot_victims,
         'scored_attackers': len(scored), 'anchoring': dict(stats),

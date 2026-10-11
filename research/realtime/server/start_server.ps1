@@ -8,6 +8,7 @@ param(
     [string]$Map = 'de_dust2',
     [Parameter(Mandatory)][string]$RconPassword,
     [Parameter(Mandatory)][string]$LanIp,
+    [ValidateRange(0, 3)][int]$BotDifficulty = 2,   # 0 easy, 1 normal, 2 hard, 3 expert
     [string]$PluginBuild = (Join-Path $PSScriptRoot '..\plugin\bin\Release\net10.0\AnticheatTelemetry.dll')
 )
 $ErrorActionPreference = 'Stop'
@@ -19,7 +20,7 @@ $launch = @(
     "-ip $LanIp",                                         # bind to the home-network address so other PCs can join
     '+game_type 0', '+game_mode 1', "+map $Map",
     '+sv_hibernate_when_empty 0', '+mp_do_warmup_period 0',
-    '+bot_join_after_player 0', '+bot_quota_mode normal', '+bot_quota 8', '+bot_difficulty 2',
+    '+bot_join_after_player 0', '+bot_quota_mode normal', '+bot_quota 8', "+bot_difficulty $BotDifficulty",
     '+mp_freezetime 2', '+mp_roundtime 3',
     '+tv_enable 1', '+tv_autorecord 1',
     "+rcon_password $RconPassword", '+sv_lan 1') -join ' '

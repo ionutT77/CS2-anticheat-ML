@@ -1059,6 +1059,44 @@ python -m pytest tests/ -q
 
 ---
 
+### Entry 22 — Real-Time Phase 2: Window Builder
+**Date:** 2026-10-11
+**Status:** Complete. Builds training-format windows from a capture; no scoring.
+
+**What was built:**
+
+- `research/realtime/capture_windows.py`: converts a capture into the per-player arrays expected by `dem_extractor.build_encounters`, the same function the demo pipeline uses. It applies every training rejection rule and computes the 39 features with the training code. Output: `encounters.npz` (`x [N,256,39]`, `player`, `tick`, the format `predict_cs2cd.py` reads) plus an audit JSON.
+- **Anchoring (from Entry 21):**
+  - hit = first tick where the victim's health drops after the plugin stamp; hits without a visible drop are dropped, not guessed;
+  - shot = tick where `m_iShotsFired` increases, falling back to plugin tick + 1;
+  - footstep and blind = plugin tick + 1, which is unvalidated and flagged in the audit.
+- **Bots:** never scored. They can be victims only with `--include-bot-victims`, keyed by slot. Training never had bot victims, so such windows test the pipeline, not detection.
+- **Velocity:** logged `AbsVelocity` by default (`--velocity derived` available).
+- **Determinism** is defined on a SHA-256 of the array contents, stored in the audit. `np.savez` embeds timestamps, so file bytes differ between identical builds.
+
+**Tests:** new `tests/test_capture_windows.py`, 11 tests, all passing:
+
+- anchor on the health drop for both the one-tick-early and same-tick stamps;
+- **causality:** rewriting every state value at or after the hit tick, and adding late footstep, blind and shot events, leaves the window bit-for-bit identical;
+- **negative control:** changing tick T-1 changes exactly the last window row, so the causality test is not vacuous;
+- shot placement, dropping unanchored hits, the bot-victim flag, bots never scored, a training rule passthrough (team damage), determinism, and the predictor input contract.
+
+Full suite: 239 passed, 2 failed (the same unrelated `test_private_scoring.py` failures).
+
+**Real session (author vs bots, 8 rounds):** 88 hits produced 51 windows (bursts merged), with no rejections. All 88 hits were anchored on a health drop; 207 of 209 gun shots were anchored by the counter (2 used the fallback).
+
+Compared with training normalization, 22 of 39 features are within 0.25 training SDs. The largest shifts come from the session itself, not the builder: the bots never moved (`victim_speed` spread ×0.00), never made noise (`time_since_victim_noise` spread ×0.00), and never damaged the author (`health` spread ×0.01). **These windows are a passive-target scenario far from training; scoring them would not say anything about cheating.**
+
+**Open:**
+
+- Footstep and blind timing are unvalidated. The server's own demo would allow a check, now that humans are recorded.
+- The bots were passive with a human on the server; the reason is unknown. Phase 3 test sessions need bots (or players) that move and shoot back.
+- `--include-bot-victims` is for pipeline testing only.
+
+**Next:** Phase 3, live listener and terminal output.
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

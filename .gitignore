@@ -71,3 +71,10 @@ wandb/
 /jupyter_cert.key
 /jupyter_cert.pem
 .pytest_cache/
+
+# Claude Code: local machine-specific settings
+.claude/settings.local.json
+
+# Optional: personal project notes not intended for Git
+CLAUDE.local.md
+.claude/CLAUDE.local.md

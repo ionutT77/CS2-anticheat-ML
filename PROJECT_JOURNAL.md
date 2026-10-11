@@ -885,6 +885,33 @@ python -m pytest tests/ -q
 
 ---
 
+### Entry 17 — Real-Time Phase 1: Capture Plugin and Parity Checks (code only)
+**Date:** 2026-10-11
+**Status:** Code written and tested on synthetic captures. The plugin is an **uncompiled draft**; nothing was run against a real server.
+
+**What was added (all new files, under `research/`):**
+
+- `realtime/capture_schema.py` — versioned NDJSON format (schema 1): one header, per-tick state rows keyed by slot, and 4 event types. Raw values only; features stay in the existing Python code.
+- `realtime/check_capture.py` — the Phase 0 checks as a CLI: schema validation, tick gaps, **C1** leakage, **C2** velocity (logged vs position-derived) and **C3** airborne summary, with optional comparison against the CS2CD example.
+- `realtime/plugin/AnticheatTelemetry.cs` and `.csproj` — CounterStrikeSharp plugin draft. It records only consented SteamIDs (plus bots for capture testing), and has no scoring, kick or ban logic. If `consent.txt` is missing or empty, it records nothing.
+- `tests/test_capture_checks.py` — 9 tests covering aligned capture, a state labeled one tick early, an earlier health dip inside the window, team damage, bots sharing SteamID 0, wrong tickrate, missing or nonfinite fields, and a velocity mismatch.
+
+**Review (anticheat-reviewer agent) and what was fixed:**
+
+- The C1 test only compared victim health at tick T-1. It now also fails if any sample in `[T-256, T)` is below pre-hit health, and skips team damage, as training does.
+- The weapon prefix is now stripped with a start-anchored check instead of a global replace.
+- **Still open, to handle in Phase 2:**
+  - Events must be cut at `tick < T`, including blinds and footsteps.
+  - `since_noise` must be built from raw events.
+  - Training's validity filters (alive throughout, round boundary, warmup, missing ticks) must come from the shared conversion path.
+  - The state-vs-event tick offset must be measured against a GOTV demo and applied in Python, never in the plugin.
+
+**Tests:** `python -m pytest -q tests` gives 224 passed, 2 failed. The 2 failures are in `tests/test_private_scoring.py` (`KeyError: 'steamid'` at `scripts/score_private_match.py:159`). That file was not touched in this phase; the failures need a separate look.
+
+**Not done (needs approval):** NuGet restore/build, dedicated-server download (~60–65 GB), SteamCMD, Metamod/CounterStrikeSharp install. So C1–C3 are not yet measured on real data, and every CSS property name is still unverified.
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

@@ -15,6 +15,12 @@ STATE_FIELDS = [
     'alive', 'warmup', 'team', 'round', 'scoped', 'duck', 'flags', 'health', 'armor',
     'recoil', 'punch0', 'punch1', 'shots', 'clip', 'weapon']
 NUMERIC_STATE_FIELDS = [f for f in STATE_FIELDS if f != 'weapon']
+# Plausible absolute bounds per field (game units/degrees). A finite but absurd value, such as
+# a mis-read memory offset, must fail validation rather than flow into features.
+RANGE_LIMITS = {
+    'yaw': 3600, 'pitch': 3600, 'x': 1e5, 'y': 1e5, 'z': 1e5,
+    'avx': 5000, 'avy': 5000, 'avz': 5000, 'duck': 1.5, 'health': 1000, 'armor': 1000,
+    'recoil': 100, 'punch0': 180, 'punch1': 180, 'shots': 1000, 'clip': 1000}
 EVENT_FIELDS = {
     'player_hurt': ['tick', 'attacker', 'victim', 'weapon', 'dmg_health', 'health'],
     'weapon_fire': ['tick', 'user', 'weapon'],
@@ -25,27 +31,34 @@ FL_ONGROUND = 1  # Source 2 pawn flag bit 0
 
 
 def read_capture(path):
-    """Return (header, states, events). Raises ValueError on a malformed line."""
+    """Return (header, states, events). Raises ValueError on a malformed line, except that a
+    partial final line (cut off by a server shutdown) is dropped and flagged on the header as
+    `truncated_tail`."""
     header, states, events = None, [], []
     with open(path, encoding='utf-8') as handle:
-        for number, line in enumerate(handle, 1):
-            if not line.strip():
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError as error:
-                raise ValueError(f'line {number}: invalid JSON') from error
-            kind = row.get('type')
-            if kind == 'header':
-                header = row
-            elif kind == 'state':
-                states.append(row)
-            elif kind == 'event':
-                events.append(row)
-            else:
-                raise ValueError(f'line {number}: unknown type {kind!r}')
+        lines = [line for line in handle if line.strip()]
+    truncated = False
+    for number, line in enumerate(lines, 1):
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as error:
+            # A server shutdown can cut the final write short; only the last line may be partial.
+            if number == len(lines) and not line.endswith('\n'):
+                truncated = True
+                break
+            raise ValueError(f'line {number}: invalid JSON') from error
+        kind = row.get('type')
+        if kind == 'header':
+            header = row
+        elif kind == 'state':
+            states.append(row)
+        elif kind == 'event':
+            events.append(row)
+        else:
+            raise ValueError(f'line {number}: unknown type {kind!r}')
     if header is None:
         raise ValueError('missing header line')
+    header['truncated_tail'] = truncated
     return header, states, events
 
 
@@ -66,6 +79,10 @@ def validate(header, states, events):
                    if not isinstance(row[f], (int, float)) or not math.isfinite(row[f])]
             if bad:
                 problems.append(f'state {i}: nonfinite or non-numeric {bad}')
+            else:
+                wild = [f for f, limit in RANGE_LIMITS.items() if abs(row[f]) > limit]
+                if wild:
+                    problems.append(f'state {i}: implausible magnitude {wild}')
     for i, row in enumerate(events):
         name = row.get('name')
         if name not in EVENT_FIELDS:

@@ -42,7 +42,7 @@ CSS names are planned sources. **Each must be confirmed against the installed Co
 | `health` | `pawn.Health` | Low | |
 | `armor_value` | `pawn.ArmorValue` | Low | |
 | `fl_recoil_idx` | active weapon `CCSWeaponBase.FlRecoilIndex` (float) | Low | Verified name in CSS 1.0.376 (an int `IRecoilIndex` also exists; training used the float) |
-| `aim_punch_angle[0/1]` | `Schema.GetSchemaValue<QAngle>(pawn.Handle, "CCSPlayerPawn", "m_aimPunchAngle")` | **High (C4)** | **Update 2026-10-11:** CSS 1.0.376 has no typed pawn property for it (`AimPunchServices` is empty; `AimPunchX/Y/Z` exist only on `EventBulletDamage`). The generic schema field name is unverified. Unreadable values are logged as null, never zero |
+| `aim_punch_angle[0/1]` | `pawn.AimPunchServices` → `CCSPlayer_AimPunchServices.m_predictableBaseAngle` (read with `GetDeclaredClass<QAngle>`) | **Medium (C4)** | **Resolved provisionally 2026-10-11.** The current build (patch 14190) has no `m_aimPunchAngle`; the pawn read returned a pointer as floats. The networked fields live in `CCSPlayer_AimPunchServices`. `dem_extractor.py` already uses `m_predictableBaseAngle` as its stand-in. On 106 matchmaking-demo windows it matches training statistics in sign and scale (see C4) |
 | `shots_fired` | `pawn.ShotsFired` (`m_iShotsFired`) | Low | **Correction:** the research doc says "counter from weapon_fire events". Training uses the entity property |
 | `active_weapon_ammo` | active weapon `Clip1` | Low | |
 | `active_weapon_name` | active weapon `DesignerName`, minus `weapon_` | Low | Weapon sets contain both internal and display names |
@@ -83,7 +83,31 @@ Reference ranges from the validation example (raw): speeds capped near 250 u/s; 
 
 **C3 — Airborne definition.** Compare `FL_ONGROUND` against the demo's `is_airborne` per tick in the GOTV comparison; adopt whichever definition matches.
 
-**C4 — Aim punch availability (added in Phase 1).** `punch_pitch` and `punch_yaw` (channels 24–25) have no typed source in CSS 1.0.376. If the generic schema read fails on a live server, these two channels would be unavailable. *Fix options, in order:* confirm the correct schema class/field on the running server; otherwise derive from another networked field if one matches the reference distribution; otherwise the live model cannot be run as-is, and that must be reported as a blocking mismatch rather than filled with zeros.
+**C4 — Aim punch availability (added in Phase 1; provisionally resolved).** `m_aimPunchAngle` does not exist in the current server or client binaries. Aim punch is stored in `CCSPlayer_AimPunchServices`: `m_predictableBaseAngle`, `m_predictableBaseAngleVel`, `m_predictableBaseTick`, and `m_unpredictableBaseAngle/Tick`. The plugin logs all of them; `punch0/1` = `m_predictableBaseAngle`.
+
+Evidence for equivalence with the training feature (`realtime/punch_study.py`, plus window statistics):
+
+| asinh-transformed | Training normalization (22M ticks) | MM demos via `dem_extractor.py` (2 demos, 106 windows) | Live bots (28 windows) |
+|---|---|---|---|
+| punch_pitch mean / std | −0.060 / 0.727 | −0.093 / 0.658 | +0.054 / 0.240 |
+| punch_yaw mean / std | +0.0017 / 0.195 | +0.0026 / 0.207 | −0.0014 / 0.010 |
+| shots_in_burst std | 0.169 | 0.138 | 0.032 (bots rarely spray) |
+
+Both the training feature and the live field are piecewise constant (they change on <0.2% of ticks without a shot) and are zero on about two-thirds of ticks. Human demo data matches training in sign and scale. Bot data is smaller because bots do not spray, which is not a field mismatch.
+
+**Tick-level confirmation (human session, 8 rounds, `realtime/demo_parity.py`):** over 35,771 alive ticks, the plugin's `punch0/punch1` equal the GOTV demo's `m_predictableBaseAngle` exactly. Yaw, pitch, position and health also match, within float rounding. In the player's own pre-hit windows, the punch statistics match training in sign and scale (pitch mean/std −0.23/0.87 vs −0.06/0.73; the player sprays longer than typical). **C4 closed.**
+
+## 5b. Event timing (found in Phase 1)
+
+State samples align with the demo tick for tick. Plugin **events** are stamped one tick earlier than the demo in about 95% of cases, and on the same tick otherwise (weapon_fire 217/228 and 11/228; player_hurt 78/88 and 10/88). Training windows came from demo event ticks, so raw plugin event ticks must not be used as anchors.
+
+State-based anchors reproduce the demo timing exactly:
+
+- **Hit anchor** = first tick where the victim's health drops: equals the demo `player_hurt` tick in 88/88 cases.
+- **Shot tick** = tick where `m_iShotsFired` increments: equals the demo `weapon_fire` tick in 207/207 cases. In 21/228 shots the counter did not change; these need a fallback (plugin tick + 1, the majority offset), and the rate should be reported.
+- Footstep and blind event timing is not validated yet.
+
+**Requirement for Phase 2:** the window builder anchors on these state-derived ticks, not on raw plugin event ticks.
 
 ## 6. Non-parity risks (do not block capture, but limit interpretation)
 

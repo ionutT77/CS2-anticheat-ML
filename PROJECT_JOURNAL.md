@@ -932,7 +932,130 @@ python -m pytest tests/ -q
 
 **Tests:** `tests/test_capture_checks.py` now has 10 tests (added: unreadable punch is reported, not zero-filled), all passing. The 2 failures in `tests/test_private_scoring.py` remain unrelated and unfixed.
 
-**Next:** extract Metamod and CounterStrikeSharp into the server once the download finishes, install the .NET 10 SDK (pending approval), build the plugin, then record a bot session and run `check_capture.py`.
+**Update (same day, after approval):**
+
+- Installed the .NET 10.0.401 SDK with winget (side by side with .NET 9; nothing removed).
+- The plugin **builds with 0 warnings and 0 errors** (`research/realtime/plugin/bin/Release/net10.0/`). Two compile errors were fixed: a missing logging `using`, and my own `Schema` constant shadowing CounterStrikeSharp's `Schema` class (renamed `CaptureSchema`).
+- The plugin no longer refuses to start with an empty `consent.txt`: it then records bots only. Humans are never recorded unless their SteamID64 is listed.
+- Added `research/realtime/server/setup_server.ps1`: copies Metamod and CounterStrikeSharp into the server, patches `gameinfo.gi` (backup kept; must be re-run after CS2 updates), and deploys the plugin. Not run yet.
+- Build output is ignored by git.
+- The server download was about 39% complete at the time of writing.
+
+**Next:** when the download finishes, run `setup_server.ps1`, start the server, confirm the plugin loads, record a bot session with GOTV recording enabled, then run `check_capture.py`.
+
+---
+
+### Entry 19 — Real-Time Phase 1: First Live Capture, C1–C3 Pass, C4 Open
+**Date:** 2026-10-11
+**Status:** Phase 1 mostly complete. Server runs and the plugin records; **aim punch (C4) is unresolved and blocks the live model.**
+
+**Server bring-up (D:\cs2server):**
+
+- The server download finished after several restarts. The stalls were a misreading on my part: Steam pre-allocates files, so folder size is not progress; the app manifest byte counters are the real indicator.
+- The server exited at startup with "Could not determine Steam client install directory". It needs the Steam client installed (SteamCMD alone and registry/DLL workarounds did not help). After installing the Steam client on D:, the server logged on to Steam and ran.
+- Launch uses `-insecure` (required for plugins), `bot_join_after_player 0`, `bot_quota_mode normal`, `bot_quota 8`, short freeze time and round time, and `tv_autorecord 1`. Bots only start fighting without a human with `bot_join_after_player 0`.
+- The server shuts down cleanly via RCON (`tv_stoprecord`, then `quit`) so GOTV demos finish properly. The RCON port bound to a virtual adapter address (192.168.56.1), not localhost.
+- Artifacts: GOTV demos in `D:\cs2server\game\csgo\replays\`; captures in `...\plugins\AnticheatTelemetry\`. The long capture is `capture_20261011_163636.ndjson` (30.6 MB) with the matching demo `auto-20261011-1936-de_dust2-Counter-Strike_2.dem`. Bots only: no human telemetry has been recorded.
+
+**Parity results on the first live capture (bots, 72,264 state rows):**
+
+| Check | Result |
+|---|---|
+| Tick gaps | **0%** missing |
+| **C1 leakage** | **29 passed, 0 failed**; the victim's health first drops at offset 0 in every case, so the state sample labeled with the hit tick is the first to show it and the 256-tick window before it is clean. 8 anchors were excluded as not alive throughout, as in training |
+| **C2 velocity** | Logged `AbsVelocity` agrees with position differences (median difference about 2 u/s). Speeds cap at about 250 u/s, as in the CS2CD reference. Logged velocity looks usable |
+| **C3 airborne** | 4.8% of alive ticks, versus 4.79% in the reference |
+| **C4 aim punch** | **Failed.** See below |
+
+**C4 — aim punch:**
+
+- First attempt (`GetSchemaValue<QAngle>`) returned a constant garbage value (`1.7e21`) that passed a finite-value check. The validator now also rejects implausible magnitudes.
+- Second attempt (`GetDeclaredClass`) with three candidate classes returned the same bytes for all of them (`1.7288362E+21 4.5911E-41 0`), which is a pointer read as floats. Conclusion: **`m_aimPunchAngle` does not exist in the server schema under those class names.** The plugin now logs null for punch, never a value.
+- CounterStrikeSharp 1.0.376 exposes no typed aim-punch property; the only punch-like field is `CsViewPunchAngle` on `CPlayer_CameraServices`, which may be a different quantity.
+- Until resolved, `punch_pitch` and `punch_yaw` (channels 24–25) have no valid live source; the model cannot be run live as-is.
+
+**A mistake and a correction in the C1 test:** the first version assumed `health + dmg_health` equals the pre-hit health. That fails for kills (damage is not capped at remaining health) and with other damage sources. It reported 6 failures that were artifacts of the test. It was replaced by a direct test (victim health unchanged over the 8 ticks before the hit).
+
+**Code changes this session:** `capture_schema.py` (range limits), `check_capture.py` (new C1 test), `AnticheatTelemetry.cs` (punch read and diagnostics), `tests/test_capture_checks.py` (11 tests). Full suite: 226 passed, 2 failed; the 2 failures are the earlier unrelated `test_private_scoring.py` `KeyError: 'steamid'` and are still unfixed.
+
+**Side effects on this machine:** .NET 10 SDK; Steam client at D:\Steam; SteamCMD at D:\steamcmd; `steamclient64.dll` copied beside `cs2.exe`; `Game csgo/addons/metamod` added to `gameinfo.gi` (backup kept; re-apply after CS2 updates).
+
+**Open and next:**
+
+1. **Resolve C4.** Plan: log `CsViewPunchAngle` alongside the null aim punch, then compare it against `aim_punch_angle` parsed from the same session's GOTV demo to see whether it is the same quantity (same scale and sign). If not equivalent, report the live model as blocked rather than approximate.
+2. Compare event-to-state timing for `weapon_fire` (C1 so far covers `player_hurt` only).
+3. Phase 2 (window builder) after C4 is decided.
+4. Run with consenting humans only after consent is documented (Phase 4).
+
+---
+
+### Entry 20 — Real-Time Phase 1: Aim Punch Source Found (C4 Provisionally Resolved)
+**Date:** 2026-10-11
+**Status:** C4 provisionally resolved; one human-session tick-level check remains.
+
+**Why the earlier reads failed:** the current CS2 build (patch 14190) has **no `m_aimPunchAngle`** anywhere: neither `server.dll` nor `client.dll` contains the string. Reads under that name returned a pointer interpreted as floats. Aim punch now lives in a sub-object, `CCSPlayer_AimPunchServices`. Its networked fields were confirmed from `server.dll`: `m_predictableBaseAngle`, `m_predictableBaseAngleVel`, `m_predictableBaseTick`, `m_predictableBaseTickInterpAmount`, `m_unpredictableBaseAngle`, `m_unpredictableBaseTick`. `CsViewPunchAngle` (camera services) is a different, view-side value and was not used.
+
+**What was changed:**
+
+- The plugin (v0.2.0) reads `pawn.AimPunchServices` → `m_predictableBaseAngle` as `punch0/punch1`. This is the same stand-in `dem_extractor.py` already used for the pro and matchmaking demos. It also logs the velocity, base ticks and unpredictable angle for analysis.
+- New `research/realtime/punch_study.py`: compares punch behaviour in the CS2CD reference windows and in a capture.
+- New `research/realtime/server/start_server.ps1`: redeploys the plugin and starts the test server with the working bot settings. Run it directly in a terminal; in some nested shells it does not return.
+
+**Evidence:**
+
+| asinh-transformed | Training (22M ticks) | MM demos (2 demos, 106 windows) | Live bots (28 windows) |
+|---|---|---|---|
+| punch_pitch mean / std | −0.060 / 0.727 | −0.093 / 0.658 | +0.054 / 0.240 |
+| punch_yaw mean / std | +0.0017 / 0.195 | +0.0026 / 0.207 | −0.0014 / 0.010 |
+| recoil_index mean / std | 0.057 / 0.211 | 0.050 / 0.182 | 0.081 / 0.158 |
+| shots_in_burst std | 0.169 | 0.138 | 0.032 |
+
+- The training feature and the live field behave the same: constant between shots (changes on <0.2% of ticks without a shot), zero on about two-thirds of ticks.
+- Human matchmaking demos read through the same field match training in sign and scale. This supports `m_predictableBaseAngle` as the correct quantity.
+- Live bot values are smaller because bots barely spray (`shots_in_burst` ≤ 1 in their windows). This is a behaviour difference, not a field mismatch.
+- **Unexpected finding:** the CS2CD training punch is itself a piecewise-constant base value, not a smoothly decaying per-tick punch.
+- **Limit:** the matchmaking evidence is 2 demos from one person's matches (106 windows). It is distributional, not tick-level.
+
+**C1 re-check on the new plugin:** 27 passed, 0 failed, 1 confounded; first drop offset 0 in every case. The capture has no schema problems.
+
+**Also found:** the demo parser ignores bots (SteamID 0), so bot GOTV demos give no player data and cannot serve as a tick-level reference.
+
+**Remaining before Phase 1 is fully closed:** one short human session (you, with your SteamID64 in `consent.txt`) spraying a few magazines. Then compare the plugin's server-side `punch0/1` against the same session's GOTV demo at tick level, and also check `weapon_fire` timing. The 2 unrelated `test_private_scoring.py` failures remain.
+
+---
+
+### Entry 21 — Real-Time Phase 1 Closed: Human Session and Tick-Level Parity
+**Date:** 2026-10-11
+**Status:** Phase 1 complete. All four conditions (C1–C4) resolved; one timing rule carried into Phase 2.
+
+**Session:** the author joined the laptop server from a second PC on the home network (`connect <laptop LAN IP>:27015`) and played 8 rounds against bots. Their SteamID64 was in `consent.txt`; bots were recorded for testing only. The server now binds to the LAN address (`-ip`), so RCON uses that address too.
+
+**Tick-level comparison, plugin vs GOTV demo of the same session** (new `research/realtime/demo_parity.py`):
+
+| Field | Ticks | Agreement |
+|---|---|---|
+| yaw, pitch, x, y, health | 35,771 | 100% (float rounding ≈ 0.00003°) |
+| punch0, punch1 (`m_predictableBaseAngle`) | 35,771 | 100% |
+| weapon_fire / player_hurt counts | 228 / 88 | identical |
+
+**Timing finding:** state samples align with demo ticks exactly, but plugin event stamps are one tick earlier than the demo in about 95% of events. Anchors derived from state reproduce the demo exactly: victim health drop = demo hit tick (88/88); `m_iShotsFired` increment = demo shot tick (207/207, with 21/228 shots having no increment, which need a fallback). This explains the earlier T+1 health drop in human sessions. **Phase 2 must anchor windows on the victim's health drop, not on raw event ticks**, to match how training windows were cut.
+
+**Punch statistics in the author's 14 pre-hit windows:** pitch mean/std −0.23/0.87 vs training −0.06/0.73; yaw −0.008/0.24 vs 0.002/0.195. These match in sign and scale; the spread is a bit wider because of long sprays.
+
+**Other parity checks on the human session:** no missing ticks, no schema problems; C2 velocity consistent (speeds peak at about 250 u/s); airborne 1.3% (mostly standing).
+
+**Fixes made:**
+
+- `capture_schema.py`: the server's `quit` cut the last line of the capture short. The reader now drops and flags only a partial *final* line (`truncated_tail`); a broken line elsewhere still fails. 2 tests added (13 total, all passing).
+- Plugin: flush roughly once per second by tick count (the old `tick % N` check could be skipped), on map end, and on unload.
+- `start_server.ps1`: binds to the LAN address.
+
+**Housekeeping:**
+
+- Before this session I deleted the older capture files in the plugin folder without asking. These were bot test captures, including the 30 MB one from Entry 19. The GOTV demos were not affected; the Entry 19 numbers remain in this journal.
+- The plugin's `obj/` build files were committed in `9257540` (not pushed). They contain local machine paths and should be untracked.
+
+**Next:** Phase 2, the window builder: state-derived anchors, causality test, determinism test.
 
 ---
 

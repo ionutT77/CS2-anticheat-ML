@@ -1,24 +1,26 @@
-// DRAFT (schema v1), not yet compiled or run. Property names were checked against the
-// CounterStrikeSharp 1.0.376 assembly metadata, except the aim-punch schema field (see
-// TryReadPunch). Records raw state only; it never scores, kicks or bans.
+// Telemetry plugin (capture schema v1), CounterStrikeSharp 1.0.376. Runs on the local test
+// server; property names checked against the assembly metadata and the server schema.
+// Records raw state only; it never scores, kicks or bans.
 using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace AnticheatTelemetry;
 
 public class AnticheatTelemetry : BasePlugin
 {
     public override string ModuleName => "AnticheatTelemetry";
-    public override string ModuleVersion => "0.1.0-schema1";
-    private const int Schema = 1;
+    public override string ModuleVersion => "0.2.0-schema1";
+    private const int CaptureSchema = 1;
     private const int TickRate = 64;
 
     private StreamWriter? _out;
     private int _lastTick = -1;
+    private int _lastFlushTick;
     private HashSet<ulong> _consent = new();
 
     public override void Load(bool hotReload)
@@ -29,22 +31,24 @@ public class AnticheatTelemetry : BasePlugin
             _consent = File.ReadAllLines(consentPath)
                 .Select(l => l.Trim()).Where(l => ulong.TryParse(l, out _)).Select(ulong.Parse).ToHashSet();
         if (_consent.Count == 0)
-        {
-            Logger.LogError("consent.txt missing or empty: recording disabled.");
-            return;
-        }
+            Logger.LogWarning("consent.txt missing or empty: only bots will be recorded.");
         var path = Path.Combine(ModuleDirectory, $"capture_{DateTime.UtcNow:yyyyMMdd_HHmmss}.ndjson");
         _out = new StreamWriter(path) { AutoFlush = false };
-        Write(new { type = "header", schema = Schema, tickrate = TickRate, plugin = ModuleVersion,
+        Write(new { type = "header", schema = CaptureSchema, tickrate = TickRate, plugin = ModuleVersion,
                     map = Server.MapName, consent_count = _consent.Count });
         RegisterListener<Listeners.OnTick>(OnTick);
+        RegisterListener<Listeners.OnMapEnd>(() => _out?.Flush());
         RegisterEventHandler<EventPlayerHurt>(OnHurt);
         RegisterEventHandler<EventWeaponFire>(OnFire);
         RegisterEventHandler<EventPlayerFootstep>(OnStep);
         RegisterEventHandler<EventPlayerBlind>(OnBlind);
     }
 
-    public override void Unload(bool hotReload) => _out?.Dispose();
+    public override void Unload(bool hotReload)
+    {
+        _out?.Flush();
+        _out?.Dispose();
+    }
 
     private void Write(object row) => _out?.WriteLine(JsonSerializer.Serialize(row));
 
@@ -80,22 +84,58 @@ public class AnticheatTelemetry : BasePlugin
                 round = rules?.TotalRoundsPlayed ?? -1, scoped = pawn.IsScoped ? 1 : 0, duck,
                 flags = pawn.Flags, health = pawn.Health, armor = pawn.ArmorValue,
                 recoil = weapon is null ? 0f : new CCSWeaponBase(weapon.Handle).FlRecoilIndex,
-                punch0 = punch?.X, punch1 = punch?.Y, // null (never 0) when unreadable
+                // null (never 0) when unreadable. punch0/1 = m_predictableBaseAngle (same stand-in
+                // as dem_extractor.py); the extra pb_/ub_ fields exist only for the C4 comparison.
+                punch0 = punch?.P0, punch1 = punch?.P1,
+                pb_vel0 = punch?.V0, pb_vel1 = punch?.V1, pb_tick = punch?.BaseTick,
+                ub0 = punch?.U0, ub1 = punch?.U1, ub_tick = punch?.UBaseTick,
                 shots = pawn.ShotsFired, clip = weapon?.Clip1 ?? 0,
                 weapon = StripPrefix(weapon?.DesignerName),
             });
         }
-        if (tick % (TickRate * 5) == 0) _out?.Flush();
+        // Flush about once a second by tick count (not tick % N, which can be skipped), so a
+        // server shutdown loses at most ~1 s and leaves at most one partial final line.
+        if (tick - _lastFlushTick >= TickRate) { _out?.Flush(); _lastFlushTick = tick; }
     }
 
-    // CSS 1.0.376 has no typed aim-punch property on the pawn (checked in the assembly metadata),
-    // so read the networked field generically. The class/field name is UNVERIFIED until run on a
-    // live server; capture_check.py reports null punch values instead of letting them become zeros.
-    private static QAngle? TryReadPunch(CCSPlayerPawn pawn)
+    // The current CS2 build (patch 14190) has no m_aimPunchAngle on the pawn: server.dll and
+    // client.dll contain no such string, and reads under that name returned a pointer read as
+    // floats. Aim punch now lives in CCSPlayer_AimPunchServices (networked fields confirmed in
+    // server.dll): m_predictableBaseAngle/AngleVel/Tick and m_unpredictableBaseAngle/Tick.
+    // dem_extractor.py already uses m_predictableBaseAngle as its stand-in for the training
+    // feature. Whether it is EQUIVALENT to the per-tick m_aimPunchAngle in CS2CD is unproven
+    // (a base angle may not decay per tick), so all components are logged for comparison.
+    private const string PunchCls = "CCSPlayer_AimPunchServices";
+
+    private sealed record PunchState(float P0, float P1, float V0, float V1, int BaseTick, float U0, float U1, int UBaseTick);
+
+    private static bool Plausible(QAngle a) =>
+        float.IsFinite(a.X) && float.IsFinite(a.Y) && MathF.Abs(a.X) < 180 && MathF.Abs(a.Y) < 180;
+
+    private PunchState? TryReadPunch(CCSPlayerPawn pawn)
     {
-        try { return Schema.GetSchemaValue<QAngle>(pawn.Handle, "CCSPlayerPawn", "m_aimPunchAngle"); }
-        catch { return null; }
+        try
+        {
+            var services = pawn.AimPunchServices;
+            if (services is null || services.Handle == IntPtr.Zero) return null;
+            var h = services.Handle;
+            var angle = Schema.GetDeclaredClass<QAngle>(h, PunchCls, "m_predictableBaseAngle");
+            var vel = Schema.GetDeclaredClass<QAngle>(h, PunchCls, "m_predictableBaseAngleVel");
+            var unpred = Schema.GetDeclaredClass<QAngle>(h, PunchCls, "m_unpredictableBaseAngle");
+            if (!Plausible(angle) || !Plausible(unpred) || !float.IsFinite(vel.X) || !float.IsFinite(vel.Y)) return null;
+            return new PunchState(angle.X, angle.Y, vel.X, vel.Y,
+                Schema.GetSchemaValue<int>(h, PunchCls, "m_predictableBaseTick"),
+                unpred.X, unpred.Y,
+                Schema.GetSchemaValue<int>(h, PunchCls, "m_unpredictableBaseTick"));
+        }
+        catch (Exception e)
+        {
+            if (!_punchErrorLogged) { _punchErrorLogged = true; Logger.LogWarning("aim punch read failed: {Msg}", e.Message); }
+            return null;
+        }
     }
+
+    private bool _punchErrorLogged;
 
     private static string StripPrefix(string? name) =>
         name is not null && name.StartsWith("weapon_") ? name["weapon_".Length..] : name ?? "";

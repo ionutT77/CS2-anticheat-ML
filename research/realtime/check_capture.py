@@ -66,10 +66,17 @@ def anchors(events):
 
 
 def leakage_check(series, events):
-    """C1. For every window anchor T the victim state at tick T-1 must still show
-    pre-hit health, so no sample inside [T-256, T) reflects the hit."""
-    passed = failed = skipped = team_damage = 0
+    """C1. For every window anchor T the victim's health must be unchanged over the ticks
+    just before T, so no sample inside [T-256, T) reflects the hit. The test does not rely on
+    `health + dmg_health` (damage is not capped at remaining health, and other damage
+    sources break the equality). Anchors with other damage to the same victim nearby are
+    reported as `confounded` and not judged. `first_drop_offset` is the tick, relative to the
+    event tick, at which the victim's health first falls; 0 means the sample labeled T is the
+    first to show the hit, which is what the window definition needs."""
+    lookback = 8
+    passed = failed = skipped = team_damage = confounded = not_alive = 0
     offsets = []
+    hurts = [e for e in events if e['name'] == 'player_hurt']
     for e in anchors(events):
         s = series.get(e['victim'])
         a = series.get(e['attacker'])
@@ -80,19 +87,27 @@ def leakage_check(series, events):
         if s['team'][s['tick'] == t - 1][0] == a['team'][a['tick'] == t - 1][0]:
             team_damage += 1  # training rejects team damage
             continue
-        pre = e['health'] + e['dmg_health']
-        in_window = (s['tick'] >= t - 256) & (s['tick'] < t)
-        # Health must equal the pre-hit value just before T and never dip below it earlier.
-        if s['health'][s['tick'] == t - 1][0] == pre and not np.any(s['health'][in_window] < pre):
+        window = lambda x: (x['tick'] >= t - 256) & (x['tick'] < t)
+        if not (s['alive'][window(s)].all() and a['alive'][window(a)].all()):
+            not_alive += 1  # training rejects windows not alive throughout
+            continue
+        if any(h is not e and h['victim'] == e['victim'] and abs(h['tick'] - t) <= lookback
+               for h in hurts):
+            confounded += 1
+            continue
+        before = s['health'][(s['tick'] >= t - lookback) & (s['tick'] < t)]
+        if len(before) and np.all(before == before[0]):
             passed += 1
         else:
             failed += 1
-        window = (s['tick'] >= t - 3) & (s['tick'] <= t + 3) & (s['health'] < pre)
-        if window.any():
-            offsets.append(int(s['tick'][window].min() - t))
+        near = (s['tick'] >= t - lookback) & (s['tick'] <= t + lookback)
+        dropped = near & (s['health'] < before[0]) if len(before) else near & False
+        if dropped.any():
+            offsets.append(int(s['tick'][dropped].min() - t))
     values, counts = np.unique(offsets, return_counts=True)
-    return {'passed': passed, 'failed': failed, 'skipped': skipped, 'team_damage': team_damage,
-            'first_visible_tick_offset': {int(v): int(c) for v, c in zip(values, counts)},
+    return {'passed': passed, 'failed': failed, 'confounded': confounded,
+            'not_alive_throughout': not_alive, 'skipped': skipped, 'team_damage': team_damage,
+            'first_drop_offset': {int(v): int(c) for v, c in zip(values, counts)},
             'ok': failed == 0 and passed > 0}
 
 

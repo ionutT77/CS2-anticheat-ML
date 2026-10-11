@@ -32,7 +32,7 @@ def capture(tmp_path, drop_tick=HIT, tickrate=64):
 def test_aligned_capture_passes(tmp_path):
     report = run(capture(tmp_path))
     assert report['ok'], report
-    assert report['C1_leakage']['first_visible_tick_offset'] == {0: 1}
+    assert report['C1_leakage']['first_drop_offset'] == {0: 1}
     assert report['C2_velocity']['abs_diff_logged_vs_derived_p50_p90_p99'][0] < 0.01
 
 
@@ -58,6 +58,22 @@ def test_team_damage_is_not_counted(tmp_path):
     assert result['team_damage'] == 1 and result['passed'] == 0
 
 
+def test_partial_final_line_is_dropped_and_flagged(tmp_path):
+    path = capture(tmp_path)
+    path.write_text(path.read_text(encoding='utf-8') + '\n{"type":"state","tick":9', encoding='utf-8')
+    header, states, _ = read_capture(path)
+    assert header['truncated_tail'] and all('slot' in r for r in states)
+
+
+def test_partial_line_in_the_middle_still_fails(tmp_path):
+    path = capture(tmp_path)
+    lines = path.read_text(encoding='utf-8').split('\n')
+    lines.insert(3, '{"type":"state","tick":9')
+    path.write_text('\n'.join(lines), encoding='utf-8')
+    with pytest.raises(ValueError):
+        read_capture(path)
+
+
 def test_bots_with_same_steamid_stay_separate(tmp_path):
     _, states, _ = read_capture(capture(tmp_path))
     assert set(by_slot(states)) == {0, 1}
@@ -80,6 +96,12 @@ def test_unreadable_punch_is_reported_not_zero_filled(tmp_path):
     header, states, events = read_capture(capture(tmp_path))
     states[0]['punch0'] = None
     assert any('punch0' in p for p in validate(header, states, events))
+
+
+def test_finite_but_absurd_punch_is_rejected(tmp_path):
+    header, states, events = read_capture(capture(tmp_path))
+    states[0]['punch0'] = 1.7288362e21  # value seen from a wrong schema offset
+    assert any('implausible' in p and 'punch0' in p for p in validate(header, states, events))
 
 
 def test_velocity_mismatch_is_visible(tmp_path):

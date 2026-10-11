@@ -912,6 +912,30 @@ python -m pytest tests/ -q
 
 ---
 
+### Entry 18 — Real-Time Phase 1: Server Install Started, Plugin API Verified
+**Date:** 2026-10-11
+**Status:** In progress. Server download running; plugin not yet built or run.
+
+**Approved and done:**
+
+- SteamCMD installed at `D:\steamcmd`.
+- CS2 dedicated server download started into `D:\cs2server` (anonymous login, app 730). Total size is **73.9 GB**, above the 60–65 GB estimate in the research doc.
+- Downloaded, unextracted into the server so far: Metamod:Source `2.0.0-git1474` (Windows) and CounterStrikeSharp `v1.0.376` with runtime (Windows), each in its own folder under `D:\downloads`. Both archives lay out an `addons\` folder meant to be copied into `game\csgo\`.
+- NuGet package `CounterStrikeSharp.API` pinned to `1.0.376` (was `*`).
+
+**Plugin API check:** the NuGet package was cached by a failed restore, so names were checked against its assembly metadata with a small throwaway reader (kept outside the repo). Results:
+
+- Confirmed: `EyeAngles`, `AbsOrigin`, `AbsVelocity`, `Health`, `LifeState`, `TeamNum`, `Flags`, `IsScoped`, `ArmorValue`, `ShotsFired`, `Clip1`, `DuckAmount`, `WarmupPeriod`, `TotalRoundsPlayed`, `SteamID`, `Slot`, the four event types and their fields.
+- **Fixed:** weapon recoil is `FlRecoilIndex` (float), not `RecoilIndex`.
+- **New blocker candidate (C4):** this CSS version has **no typed aim-punch property** on the pawn. The plugin reads `m_aimPunchAngle` through generic schema access; that field name is unverified and fails to null, never to zero. If it cannot be read on the live server, channels `punch_pitch` and `punch_yaw` have no source, and the live model could not run as-is.
+- The package requires **.NET 10**. Installed SDKs are 9.0.305 and 9.0.306, so the plugin cannot be built yet. A .NET 10 SDK install needs approval.
+
+**Tests:** `tests/test_capture_checks.py` now has 10 tests (added: unreadable punch is reported, not zero-filled), all passing. The 2 failures in `tests/test_private_scoring.py` remain unrelated and unfixed.
+
+**Next:** extract Metamod and CounterStrikeSharp into the server once the download finishes, install the .NET 10 SDK (pending approval), build the plugin, then record a bot session and run `check_capture.py`.
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

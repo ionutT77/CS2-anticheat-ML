@@ -1,10 +1,11 @@
-// UNCOMPILED DRAFT (schema v1). Written without the CounterStrikeSharp package restored, so
-// every API name below is unverified and must be checked against the installed CSS version
-// (see PHASE0_PARITY.md). Records raw state only; it never scores, kicks or bans.
+// DRAFT (schema v1), not yet compiled or run. Property names were checked against the
+// CounterStrikeSharp 1.0.376 assembly metadata, except the aim-punch schema field (see
+// TryReadPunch). Records raw state only; it never scores, kicks or bans.
 using System.Text.Json;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Memory;
 using CounterStrikeSharp.API.Modules.Utils;
 
 namespace AnticheatTelemetry;
@@ -67,6 +68,7 @@ public class AnticheatTelemetry : BasePlugin
             var weapon = pawn.WeaponServices?.ActiveWeapon.Value;
             var duck = pawn.MovementServices is null ? 0f
                 : new CCSPlayer_MovementServices(pawn.MovementServices.Handle).DuckAmount;
+            var punch = TryReadPunch(pawn);
             Write(new
             {
                 type = "state", tick, slot = p.Slot, steamid = p.IsBot ? 0UL : p.SteamID,
@@ -77,13 +79,22 @@ public class AnticheatTelemetry : BasePlugin
                 warmup = rules?.WarmupPeriod == true ? 1 : 0, team = p.TeamNum,
                 round = rules?.TotalRoundsPlayed ?? -1, scoped = pawn.IsScoped ? 1 : 0, duck,
                 flags = pawn.Flags, health = pawn.Health, armor = pawn.ArmorValue,
-                recoil = weapon is null ? 0f : new CCSWeaponBase(weapon.Handle).RecoilIndex,
-                punch0 = pawn.AimPunchAngle.X, punch1 = pawn.AimPunchAngle.Y,
+                recoil = weapon is null ? 0f : new CCSWeaponBase(weapon.Handle).FlRecoilIndex,
+                punch0 = punch?.X, punch1 = punch?.Y, // null (never 0) when unreadable
                 shots = pawn.ShotsFired, clip = weapon?.Clip1 ?? 0,
                 weapon = StripPrefix(weapon?.DesignerName),
             });
         }
         if (tick % (TickRate * 5) == 0) _out?.Flush();
+    }
+
+    // CSS 1.0.376 has no typed aim-punch property on the pawn (checked in the assembly metadata),
+    // so read the networked field generically. The class/field name is UNVERIFIED until run on a
+    // live server; capture_check.py reports null punch values instead of letting them become zeros.
+    private static QAngle? TryReadPunch(CCSPlayerPawn pawn)
+    {
+        try { return Schema.GetSchemaValue<QAngle>(pawn.Handle, "CCSPlayerPawn", "m_aimPunchAngle"); }
+        catch { return null; }
     }
 
     private static string StripPrefix(string? name) =>

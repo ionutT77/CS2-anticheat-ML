@@ -76,6 +76,12 @@ def test_nonfinite_value_is_reported(tmp_path):
     assert any('nonfinite' in p for p in validate(header, states, events))
 
 
+def test_unreadable_punch_is_reported_not_zero_filled(tmp_path):
+    header, states, events = read_capture(capture(tmp_path))
+    states[0]['punch0'] = None
+    assert any('punch0' in p for p in validate(header, states, events))
+
+
 def test_velocity_mismatch_is_visible(tmp_path):
     _, states, _ = read_capture(capture(tmp_path))
     for row in states:

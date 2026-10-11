@@ -1,0 +1,112 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "CounterStrikeSharp.API/1.0.376": {
+        "type": "package"
+      }
+    }
+  },
+  "libraries": {
+    "CounterStrikeSharp.API/1.0.376": {
+      "sha512": "TD0fSqxkNcJWFuR2TtHhYw72ONL7Rm+whsgdwlqW1UkMBdjdyNc0EtTDErf/DvgTEmwG7KNwOWZrXSjblFge9A==",
+      "type": "package",
+      "path": "counterstrikesharp.api/1.0.376",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "counterstrikesharp.api.1.0.376.nupkg.sha512",
+        "counterstrikesharp.api.nuspec",
+        "lib/net10.0/CounterStrikeSharp.API.dll",
+        "lib/net10.0/CounterStrikeSharp.API.runtimeconfig.json",
+        "lib/net10.0/CounterStrikeSharp.API.xml"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "CounterStrikeSharp.API >= 1.0.376"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\Ionut\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\Ionut\\Desktop\\desktop shit\\Licenta\\CS2-anticheat-ML\\research\\realtime\\plugin\\AnticheatTelemetry.csproj",
+      "projectName": "AnticheatTelemetry",
+      "projectPath": "C:\\Users\\Ionut\\Desktop\\desktop shit\\Licenta\\CS2-anticheat-ML\\research\\realtime\\plugin\\AnticheatTelemetry.csproj",
+      "packagesPath": "C:\\Users\\Ionut\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Ionut\\Desktop\\desktop shit\\Licenta\\CS2-anticheat-ML\\research\\realtime\\plugin\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\Ionut\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.300"
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "dependencies": {
+          "CounterStrikeSharp.API": {
+            "target": "Package",
+            "version": "[1.0.376, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1202",
+      "level": "Error",
+      "message": "Package CounterStrikeSharp.API 1.0.376 is not compatible with net8.0 (.NETCoreApp,Version=v8.0). Package CounterStrikeSharp.API 1.0.376 supports: net10.0 (.NETCoreApp,Version=v10.0)",
+      "libraryId": "CounterStrikeSharp.API",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

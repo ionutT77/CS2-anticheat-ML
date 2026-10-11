@@ -41,8 +41,8 @@ CSS names are planned sources. **Each must be confirmed against the installed Co
 | `is_airborne` | `!(pawn.Flags & FL_ONGROUND)` | Medium | demoparser2 definition may differ on ladders and water; see C3 |
 | `health` | `pawn.Health` | Low | |
 | `armor_value` | `pawn.ArmorValue` | Low | |
-| `fl_recoil_idx` | active weapon `m_flRecoilIndex` | Low | Real demos expose `m_flRecoilIndex` (Entry 14) |
-| `aim_punch_angle[0/1]` | `pawn.AimPunchAngle.X/.Y` | Medium | CS2 also networks punch tick base and fraction; confirm raw field equality against demo |
+| `fl_recoil_idx` | active weapon `CCSWeaponBase.FlRecoilIndex` (float) | Low | Verified name in CSS 1.0.376 (an int `IRecoilIndex` also exists; training used the float) |
+| `aim_punch_angle[0/1]` | `Schema.GetSchemaValue<QAngle>(pawn.Handle, "CCSPlayerPawn", "m_aimPunchAngle")` | **High (C4)** | **Update 2026-10-11:** CSS 1.0.376 has no typed pawn property for it (`AimPunchServices` is empty; `AimPunchX/Y/Z` exist only on `EventBulletDamage`). The generic schema field name is unverified. Unreadable values are logged as null, never zero |
 | `shots_fired` | `pawn.ShotsFired` (`m_iShotsFired`) | Low | **Correction:** the research doc says "counter from weapon_fire events". Training uses the entity property |
 | `active_weapon_ammo` | active weapon `Clip1` | Low | |
 | `active_weapon_name` | active weapon `DesignerName`, minus `weapon_` | Low | Weapon sets contain both internal and display names |
@@ -82,6 +82,8 @@ Reference ranges from the validation example (raw): speeds capped near 250 u/s; 
 **C2 — Velocity source.** Training `velocity_X/Y/Z` may be networked velocity or a demoparser2 position-difference value. GOTV produced no velocity at all (Entry 14), which suggests the CS2CD values came from a different recording path. *Fix:* log both `AbsVelocity` and positions, then compare each candidate's speed and vertical-speed distributions with the reference (cap near 250 u/s, vertical tails). Pick the closer one and record the choice.
 
 **C3 — Airborne definition.** Compare `FL_ONGROUND` against the demo's `is_airborne` per tick in the GOTV comparison; adopt whichever definition matches.
+
+**C4 — Aim punch availability (added in Phase 1).** `punch_pitch` and `punch_yaw` (channels 24–25) have no typed source in CSS 1.0.376. If the generic schema read fails on a live server, these two channels would be unavailable. *Fix options, in order:* confirm the correct schema class/field on the running server; otherwise derive from another networked field if one matches the reference distribution; otherwise the live model cannot be run as-is, and that must be reported as a blocking mismatch rather than filled with zeros.
 
 ## 6. Non-parity risks (do not block capture, but limit interpretation)
 

@@ -813,6 +813,78 @@ python -m pytest tests/ -q
 
 ---
 
+### Entry 15 — Real-Time Detector: Option Selection and Phased Plan
+**Date:** 2026-10-11
+**Status:** Decision and plan only. No code, server download, or model change was made.
+
+**What was done:**
+
+- Compared two real-time options in `realtime_detector_research.md`:
+  1. **GSI spectator on a Valve private match** — free, but delivers roughly 10–30 Hz updates and only about 12 of 39 features reliably. The current model would need retraining on reduced, lower-rate features.
+  2. **Self-hosted dedicated server + Metamod:Source + CounterStrikeSharp** — a C# plugin captures per-tick player state at 64 Hz and streams it to a Python inference server.
+- **Decision: Option 2, Tier A (self-hosted on the local PC, €0/month).** VPS (~€6–10/month) or managed hosting (~€10–15/month) remain fallbacks if local performance or friends' ping is inadequate.
+
+**Why Option 2:**
+
+- It is the only option that can supply the 256-tick, 64 Hz, 39-channel input the saved TCN + LightGBM blend was trained on.
+- Server-side capture should restore data that GOTV lacks (Entry 14): networked velocity, `player_blind` and `player_footstep` events. In GOTV, flash and footstep features were always zero, and velocity had to be derived from position differences.
+- The server can also record GOTV demos (`tv_record`), so live and offline paths can be compared on the same match.
+
+**Open questions identified in the review of the research document:**
+
+| Claim in research doc | Status | Why it matters |
+|---|---|---|
+| Model "works as-is" / "exact match to training data" | **Unverified** | Training features came from CS2CD and demo extraction. Live capture may differ in units, sign, eye-angle source, tick ordering and aim-punch timing. |
+| All 39 features available in CSS | **Unverified** | `m_flRecoilIndex`, `m_aimPunchAngle`, `m_bIsScoped` and footstep events must be checked against the installed CSS version. |
+| Victim noise / footstep features | **Causality risk** | Events at or after the first hit must not enter the window. |
+| Calibrated thresholds apply live | **No** | Thresholds were fitted on CS2CD player-matches; a small friends' server has different prevalence and no labels. |
+| 800–1250 LOC, 12–22 hours | Optimistic | Excludes plugin debugging and parity work. |
+
+**Effect on the open challenges listed at the end of this journal:** better capture fixes missing or approximated features (flash, footsteps, velocity). It is not expected, on its own, to fix the AWP false positives, which look like skill/domain shift (Entry 14), or to detect silent aim, which needs features the current 39 channels do not contain.
+
+**Phased plan (ordered by importance; each phase reports before the next starts):**
+
+| Phase | Goal | Gate / output |
+|---|---|---|
+| **0 — Parity gate** | Pick one CS2CD validation match (record its ID and code revision). For each of the 39 channels in `research/examples/input_schema.json`, record the training source and the planned plugin source, and flag mismatches. | Go/no-go memo. Stop if a blocking mismatch cannot be fixed in code. |
+| **1 — Minimal capture** | CSS plugin logging per-tick state to a versioned NDJSON file (no socket yet). Test on a local server with bots or consenting friends. Review the feature mapping with the `anticheat-reviewer` agent. | Captured features match Phase 0 expectations. |
+| **2 — Window builder** | Reuse `cs2_data.py` helpers to build `[encounters, 256, 39]` NPZ compatible with `predict_cs2cd.py`. | Causality test (no tick at/after first hit) and determinism test (same capture → identical NPZ). |
+| **3 — Live inference** | Listener builds encounters on `player_hurt`, reuses `private_scoring.py`, prints player-match score, policy flags and encounter count. | Measured end-to-end latency. |
+| **4 — Evaluation & consent** | Log plugin version, code revision, seed and threshold source per session. Document the consent step. | Precision/recall/FPR only against verified labels; otherwise scores are reported as uncalibrated observations. |
+
+**Constraints carried into implementation:**
+
+- Downloading the ~60–65 GB dedicated server, installing SteamCMD or packages, and any retraining require explicit approval.
+- The reserved CS2CD test split, `research/experiments/`, `research/models/` and `research/results/` are not modified.
+- Shadow/review mode only: no automatic kick or ban. All participants must consent to telemetry capture.
+- Results from the friends' server must not be presented as validated live anti-cheat performance.
+
+**Output:** This entry and the implementation prompt for Opus 5.5 (Phases 0–4 above). Implementation has not started.
+
+---
+
+### Entry 16 — Real-Time Phase 0: Parity Gate
+**Date:** 2026-10-11
+**Status:** Completed. Decision: **GO to Phase 1, with three conditions.** Memo: `research/realtime/PHASE0_PARITY.md`.
+
+**What was done:**
+
+- Reference match: `no_cheater_present/1` (validation split, de_inferno). Its windows are in `research/examples/example_validation_player.npz`. Training statistics are in `research/experiments/cs2cd_v1/normalization.json`. Code revision `dabbd65`.
+- Mapped all 39 channels back to about 22 raw per-tick fields and 4 events. The plugin will log raw state only; features stay in the existing Python code, so parity reduces to raw-field parity plus tick alignment.
+- Corrected the research doc: `shots_in_burst` comes from the `m_iShotsFired` entity property, not from counting `weapon_fire` events.
+
+**Findings:**
+
+- Raw CS2CD data is not stored locally, and a CS2CD match cannot be replayed through a server plugin. Tick-level parity will therefore use a GOTV demo recorded in the same session, processed by `dem_extractor.py`. Distribution-level parity will use the CS2CD reference.
+- **C1 tick alignment (highest risk):** a one-tick offset could put post-hit state in the window, leaking information. Planned test: `victim_health` at the last window tick must equal the pre-hit health (`health + dmg_health`).
+- **C2 velocity source:** the training velocity may be networked or derived from positions. Log both and choose by distribution match.
+- **C3 airborne definition:** compare `FL_ONGROUND` with the demo value per tick.
+- Bots have SteamID 0 and are excluded by training semantics, so they are usable for capture tests only, never for scoring.
+
+**Changed files:** `research/realtime/PHASE0_PARITY.md` (new) and this journal. No code, model or data changes; no tests run (documentation-only phase).
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

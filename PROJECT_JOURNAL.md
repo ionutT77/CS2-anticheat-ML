@@ -1131,6 +1131,88 @@ Compared with training normalization, 22 of 39 features are within 0.25 training
 
 ---
 
+### Entry 24 — Research: Capacity, Sniper False Positives, Labelled Data Sources
+**Date:** 2026-10-19
+**Status:** Research only; no model or code changes. New guide: `research/realtime/server/CAPACITY.md`.
+
+**Capacity (measured):**
+
+- Per-hit cost: window rebuild 206 / 277 / 559 ms for 10 / 20 / 40 players; model scoring 96–173 ms (warm, independent of 1–51 earlier encounters). The first hit takes 4–7 s extra while the model loads.
+- Up to 10 humans (a 5v5) is supported, at about 3% busy in a real-match hit rate (CS2CD: about 19 encounters per player-match).
+- Over 20 humans is not supported until the listener stops trimming its buffer before scoring.
+- A bounded code review found these limits:
+  - hits on non-consenting victims are dropped;
+  - a backlog of more than ~64 s silently loses hits;
+  - rejected windows are not logged;
+  - the player score never resets between maps;
+  - a reused slot can be credited to the wrong player.
+
+**Sniper false positives (post-hoc on the already-used test split; no threshold chosen from it):**
+
+- Legitimate encounters scoring ≥ 0.5: AWP 17.2% (n = 1,242), other snipers 38.9% (n = 856), all other weapons 1.9% (n = 15,877).
+- At `fpr_1pct` (0.853), **all 4 test false positives are legitimate players whose encounters are more than 50% sniper** (4/42, versus 0/874 for everyone else). At `accuracy` (0.257) the rate is 30/42 (71%), versus about 2% otherwise.
+- Training split: sniper encounters are 56.5% of cheater-labelled encounters versus 11.2% of legitimate ones. Sniper-heavy player-matches: 418 cheater-labelled versus 207 legitimate. The difference is mostly SSG 08 and the auto-snipers: AWP alone is 12.2% versus 6.6%.
+- Likely a collection or shortcut effect in CS2CD (cheaters favour snipers). Feature importance gives `weapon_sniper` only 0.9% of tree gain and `shots_in_burst` 38%, so the effect probably comes through flick dynamics; this is not proven.
+- Live: in the 8-round replay, 2 of 3 AWP hits scored ≥ 0.5, and an `f1` flag was raised after 10 encounters (0.231 vs 0.211). Entry 23 described the AWP scores as low, which understated this.
+
+**Labelled cheat data:**
+
+- No public dataset with cheat-type labels (wallhack, silent aim) was found. CS2CD labels whole matches; only matches with a VAC-banned player were manually verified; there are no cheat-type labels.
+- A feasible labelling route: the Steam Web API `GetPlayerBans` (fields include `VACBanned`, `NumberOfGameBans`, `DaysSinceLastBan`) on players from one's own matchmaking demos. Labels: banned after the match or not; cheat type unknown.
+
+**Decisions open:** treat sniper false positives as the main limitation, or open a new protocol to address them; fix the listener before larger sessions; get supervisor and ethics approval for the data plan.
+
+---
+
+### Entry 25 — OpenCS2 AWP Data Addition (Steps 1–3 of the Plan)
+**Date:** 2026-10-19
+**Status:** In progress. Data addition only; no retraining. Plan: `research/opencs2/PLAN.md`.
+
+**Decision:** add only enough legitimate sniper-heavy player-maps from professional matches to close the training gap (418 cheater-labelled vs 207 legitimate sniper-heavy player-matches), so **+211**. Adding all of OpenCS2 (~7,900 player-maps) was rejected: it would cut the positive share from 16.7% to about 6% and make the new, all-legitimate source a shortcut.
+
+**Source:** OpenCS2 HLTV demos (`blanchon/opencs2_dataset_demo`, revision `912a363`, CC BY 4.0). 1,988 demos, of which 1,206 have an AWP candidate in the metadata.
+
+**Probe findings (one demo):**
+
+- The metadata says `tick_rate: 128`, but the demo itself is **64.00 Hz** (148,093 ticks / 2,313.95 s), so it fits the 256-tick windows.
+- Extraction took 44 s. Flash data is present (90% zero, as expected), velocity is derived from position, and aim punch is present.
+- The metadata candidate rule (≥ 8 kills, ≥ 50% sniper kills) matched the encounter-based check.
+
+**Implementation:** `research/scripts/add_opencs2_awp.py`:
+
+- Outcome-blind selection: metadata candidates, seeded order (seed 20261019), two-candidate demos first, at most 3 maps per player.
+- Accept a player-map if it has ≥ 5 eligible encounters and more than 50% are with a sniper.
+- Output in exactly the `events.parquet` format of `cs2cd_v1` (`label 0`, `split train`, `source opencs2_pro`, `group opencs2/<match>`).
+- A manifest records the revision, demo checksums, approximations and a duplicate check against CS2CD.
+- Downloads are prefetched; the script can resume after interruption.
+- Raw demos are kept in `D:\opencs2\demos\`; output goes to `research/data/opencs2/awp_v1/` (ignored by git).
+
+**Tests:** `tests/test_add_opencs2.py` (candidate rule, deterministic ordering), 2 passed. A smoke run accepted 3 player-maps from 2 demos (59 encounters, 39 AWP), with columns and types identical to CS2CD and no duplicate windows. The smoke output was deleted.
+
+**Change during the run:** the first run kept only the AWP candidates. At the author's request it was stopped and restarted to extract **every player** on each downloaded map. Parsing is most of the cost, so this adds almost no time.
+
+- Accepted AWP player-maps go to `events.parquet` (`split = train`), exactly as before; the smoke test gave an identical selection.
+- All other players go to `reserve_events.parquet` (`split = reserve`). The smoke test gave 17 player-maps and 317 encounters, mostly AK-47 and M4, with no overlap and no duplicates.
+- The reserve shares matches with the training addition, so it can become extra training data later but **never an independent evaluation cohort** for a model trained on the addition.
+- Expected size: about 33,000 reserve encounters, about 1.3 GB of windows on C:.
+
+**Run status (paused 2026-10-19, night):**
+
+- The target was reduced from 211 to **100** as a first stage. The manifest records the change; re-running with `--target 211` later continues from 101 with the same selection.
+- Progress: **33/100** accepted player-maps from **28 distinct players**, out of 38 demos processed. These hold 769 encounters, 484 of them sniper shots.
+- 4 demos were skipped and recorded in the manifest: 2 lacked weapon and recoil properties, and 2 looked damaged (almost every property missing). All 4 are patch 14141, like the processed ones, so the cause is not the game version.
+- Disk use: 20 GB of raw demos on D:.
+- One download was cut off (the size check failed; server and metadata sizes match). This crashed the run, so downloads now retry 3 times.
+- Measured rate: about 14 player-maps per hour, limited by download speed.
+- **Process note:** stopping the background task ended only its shell wrapper, not the Python process inside it, which kept running until it was ended directly. Checks afterwards found no sign of two runs overlapping: no duplicate demos or player-maps, the per-player limit was respected, and every accepted entry has its windows file.
+- `events.parquet` and `reserve_events.parquet` are written only when the run finishes.
+- **Resume** from `research/`:
+  `..\venv\Scripts\python.exe -I -W ignore -u scripts/add_opencs2_awp.py --target 100 --out data/opencs2/awp_v1`
+
+**Not done (needs approval):** merged dataset version, channel handling across sources, retraining, recalibration, and evaluation on new data (plan steps 4–7).
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

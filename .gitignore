@@ -86,3 +86,6 @@ research/realtime/plugin/obj/
 research/realtime/**/capture_*.ndjson
 *.ndjson
 consent.txt
+
+# OpenCS2 data addition (demos, windows, manifest with SteamIDs)
+research/data/opencs2/

@@ -1196,7 +1196,66 @@ Compared with training normalization, 22 of 39 features are within 0.25 training
 - The reserve shares matches with the training addition, so it can become extra training data later but **never an independent evaluation cohort** for a model trained on the addition.
 - Expected size: about 33,000 reserve encounters, about 1.3 GB of windows on C:.
 
-**Run status (paused 2026-10-19, night):**
+**Run complete (2026-10-20, target 100 reached):**
+
+- **Training addition** (`research/data/opencs2/awp_v1/events.parquet`): 100 accepted player-maps from 78 distinct pro players, 2,356 encounters, 1,459 with a sniper (62%), 1,330 with an AWP. Label 0, split `train`, source `opencs2_pro`. Zero overlap with CS2CD windows.
+- **Reserve** (`reserve_events.parquet`): 25,632 encounters from 1,070 other player-maps, split `reserve`, not independent of the addition.
+- 127 demos processed, 10 skipped (damaged or missing properties), 0 download failures after the skip fix. About 65 GB of demos were processed; raw files remain on D:.
+- The run finished, but the script kept two prefetched downloads open, which kept the process alive. They were stopped and their partial files removed; the manifest and tables were already complete.
+- Not yet done: channel handling across sources, merged dataset version, retraining, recalibration and evaluation (plan steps 4–7, need approval).
+
+---
+
+### Entry 26 — Sniper-Weapon Statistics and Next Data Steps
+**Date:** 2026-10-20
+**Status:** Statistics recorded; the next steps below are planned, not started. No retraining.
+
+**Unit and caveats:** counts are **encounters** (the first hit of an attacker on a victim in a burst, whether or not the victim died), not kills. The "cheater" label belongs to the **player-match**, so a cheater encounter is not necessarily a cheating shot. Weapon groups: AWP; Scout (SSG 08); auto-snipers (SCAR-20, G3SG1); scoped rifles (AUG, SG 553).
+
+**CS2CD, training split only, before the OpenCS2 addition:**
+
+| Weapon | Cheater | Non-cheater |
+|---|---|---|
+| AWP | 1,717 | 4,776 |
+| Scout (SSG 08) | 5,933 | 2,925 |
+| Auto-sniper | 289 | 366 |
+| Scoped rifle (AUG/SG 553) | 21 | 1,072 |
+| **Total** | **7,960** | **9,139** |
+
+**Training split with the OpenCS2 addition (CS2CD training + 100 pro player-maps):**
+
+| Weapon | Cheater | Non-cheater | Change |
+|---|---|---|---|
+| AWP | 1,717 | 6,106 | +1,330 |
+| Scout (SSG 08) | 5,933 | 3,054 | +129 |
+| Auto-sniper | 289 | 366 | +0 |
+| Scoped rifle | 21 | 1,072 | +0 |
+| **Total** | **7,960** | **10,598** | **+1,459** |
+
+**Whole CS2CD, all splits (validation, calibration and test included):** AWP 2,779 cheater / 7,993 non-cheater; Scout 9,801 / 5,165; auto-sniper 517 / 651; scoped rifle 43 / 1,749. The OpenCS2 reserve adds 1,480 AWP, 172 scout and 6 scoped-rifle non-cheater encounters; it has no cheater encounters.
+
+**Findings:**
+
+- **AWP was already mostly legitimate:** about 2.8 non-cheater encounters per cheater encounter in training before the addition, now about 3.6.
+- **The imbalance is the scout, not the AWP:** about 2 cheater encounters per non-cheater one (5,933 vs 3,054 after the addition). The OpenCS2 addition added only 129 scout encounters.
+- **The earlier plan was chosen on player-matches** (418 vs 207 sniper-heavy player-matches). That count included the scout, so the AWP-focused addition helps less than expected. This was not caught when the 211 target was computed.
+- **Pro data cannot fix the scout.** The metadata of all 1,988 OpenCS2 demos contains only 1,052 scout kills (361 players, at most 21 per player) against 28,251 AWP kills. Scoped rifles: 93 AUG, 2 SG 553, 5 G3SG1 and no SCAR-20 kills. Even all pro scout data would cover about a third of the training gap (about 2,900 encounters).
+- **Scoped rifles are too rare to learn from:** 21 cheater encounters on AUG or SG 553 in training.
+
+**Next steps (planned):**
+
+1. **Research how to balance the AWP data.** Open question: how much legitimate AWP data is useful, and by what method. Options to compare: sampling or weighting by weapon, a weapon-conditioned model, or no change with the limitation reported. Any choice must respect the evaluation rules (no threshold tuning on the test set, new test cohort for any retraining).
+2. **Gather more legitimate scout data.** The pro sources are exhausted. Needed: legitimate scout-heavy players, from different skill levels.
+3. **Friend sessions to create legitimate data.** Invite several **different** friends to play each other on the private server, including scout-only and AWP-only sessions mixed with normal matches.
+   - Use the plugin capture and GOTV, with every SteamID64 in `consent.txt` and written consent from every player.
+   - Many distinct people matter more than many matches: a few friends repeated many times teach the model their style.
+   - Keep these sessions as a pre-planned **evaluation group**, not training data, unless a new protocol says otherwise.
+   - Avoid `mp_warmup_end` and `mp_restartgame` if the GOTV demo matters.
+   - Cap session length so one player cannot dominate the data.
+4. **Decide the target size once the balancing research is done,** then add data until the target is met. Report the counts by weapon and label again, and record them in this journal.
+5. **Plan steps 4–7 of `research/opencs2/PLAN.md`** (merged dataset version, source-shortcut check, retraining and recalibration, evaluation on new data) remain pending approval.
+
+**Earlier run status (paused 2026-10-19, night):**
 
 - The target was reduced from 211 to **100** as a first stage. The manifest records the change; re-running with `--target 211` later continues from 101 with the same selection.
 - Progress: **33/100** accepted player-maps from **28 distinct players**, out of 38 demos processed. These hold 769 encounters, 484 of them sniper shots.

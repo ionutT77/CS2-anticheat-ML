@@ -56,6 +56,15 @@ def download(path, revision, dest, expected_bytes=None, attempts=3):
             time.sleep(10 * attempt)
 
 
+def settle(future):
+    """Return (result, error). A failed download is reported, not raised, so one bad
+    connection costs one demo instead of the whole run."""
+    try:
+        return future.result(), None
+    except Exception as error:  # network, size mismatch after retries, disk errors
+        return None, f'{type(error).__name__}: {error}'[:300]
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as handle:
@@ -149,8 +158,16 @@ def main():
             continue
         started = time.perf_counter()
         prefetch(position)
-        dem = futures.pop(row['file_name']).result()
+        dem, download_error = settle(futures.pop(row['file_name']))
         prefetch(position + 1)
+        if download_error:
+            # not recorded in 'demos', so a later run retries this file
+            manifest.setdefault('download_failures', []).append({
+                'file_name': row['file_name'], 'match_id': row['match_id'], 'map_index': row['map_index'],
+                'error': download_error, 'at_accepted': len(manifest['accepted'])})
+            save()
+            print(f"skip download {row['match_id']}_m{row['map_index']}: {download_error}", flush=True)
+            continue
         stem = f"{row['match_id']}_m{row['map_index']}"
         npz = out / 'matches' / f'{stem}.npz'
         record = {'file_name': row['file_name'], 'match_id': row['match_id'], 'map_index': row['map_index'],

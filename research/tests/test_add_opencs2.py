@@ -1,4 +1,20 @@
-from scripts.add_opencs2_awp import candidates, ordered_demos
+from concurrent.futures import ThreadPoolExecutor
+
+from scripts.add_opencs2_awp import candidates, ordered_demos, settle
+
+
+def test_failed_download_is_reported_not_raised():
+    def broken():
+        raise IOError('size mismatch for demos/x.dem')
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        result, error = settle(ex.submit(broken))
+    assert result is None and error.startswith('OSError') and 'size mismatch' in error
+
+
+def test_successful_download_passes_through():
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        result, error = settle(ex.submit(lambda: 'path.dem'))
+    assert result == 'path.dem' and error is None
 
 
 def kills(spec):

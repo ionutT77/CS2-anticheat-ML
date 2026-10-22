@@ -3,6 +3,12 @@
 **Status:** step 1–3 implemented by `research/scripts/add_opencs2_awp.py`; steps 4–7 need
 separate approval (they change the trained model and its evaluation).
 
+**Update 2026-10-22 (journal Entry 27):** the sniper gap below turned out to be mostly the
+**scout** (scout-heavy 364 vs 122; AWP-heavy 54 vs 85), and the frozen model does not flag
+legitimate pro AWPers at the strict threshold (0/100). Recommendation: **keep this AWP
+addition out of training and use it as an evaluation group** (it has been used once, for that
+measurement). The target of 211 below is kept for the record but is no longer the plan.
+
 ## Goal
 
 Reduce false positives on legitimate sniper-heavy players by adding **only as many

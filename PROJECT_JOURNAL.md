@@ -1255,6 +1255,93 @@ Compared with training normalization, 22 of 39 features are within 0.25 training
 4. **Decide the target size once the balancing research is done,** then add data until the target is met. Report the counts by weapon and label again, and record them in this journal.
 5. **Plan steps 4–7 of `research/opencs2/PLAN.md`** (merged dataset version, source-shortcut check, retraining and recalibration, evaluation on new data) remain pending approval.
 
+---
+
+### Entry 27 — AWP Balancing, Scout Data Plan, Friend-Session Protocol
+**Date:** 2026-10-22
+**Status:** Research and design only. No training, no dataset merge, no threshold change, no download.
+
+**Correction to Entries 24–26:** the sniper false-positive problem is mostly the **scout**, not the AWP. In the CS2CD training split, sniper-heavy player-matches whose main sniper is the AWP are 85 legitimate vs 54 cheater-labelled; scout-heavy are **122 vs 364**. The 418 vs 207 gap used to set the OpenCS2 target was almost entirely scout.
+
+**New measurement: the current model on independent legitimate pro data.** Inference only; the frozen model and thresholds from the calibration split are unchanged. The pro players are not in CS2CD. Output: `local_runs/opencs2_pro_fpr_scores.csv`.
+
+| Legitimate pro players | n | `accuracy` 0.257 | `f1` 0.211 | `default_0_5` | `fpr_1pct` 0.853 |
+|---|---|---|---|---|---|
+| AWPers (OpenCS2 addition) | 100 | 13% [7.1–21.2] | 21% [13.5–30.3] | 0% [0–3.6] | **0% [0–3.6]** |
+| Riflers, same matches (reserve) | 1,069 | 0.2% [0–0.7] | 0.3% [0.1–0.8] | 0% | 0% [0–0.3] |
+
+The intervals are exact 95%. Pro AWPers come from GOTV demos (velocity derived), but the comparison with riflers controls for source because both come from the same matches and pipeline.
+
+**CS2CD test split, by main sniper weapon** (already used; descriptive only, nothing chosen from it):
+
+- Legitimate players flagged at `fpr_1pct`: scout-heavy **4/25**, AWP-heavy 0/17, not sniper-heavy 0/874. At `accuracy`: 18/25, 12/17, 19/874.
+- Cheater-labelled recall at `fpr_1pct`: scout-heavy **0.55** (n = 102), AWP-heavy 0.14 (n = 22), others 0.09 (n = 90). About 84% of strict-threshold detections (≈ 56 of ≈ 67) are scout-heavy players.
+- **The strict policy's recall and its false positives both concentrate on scout-heavy players.** Part of the headline result may come from a scout-style shortcut in CS2CD's labels. Reducing that shortcut would likely lower strict recall, and that tradeoff must be reported.
+
+**Step 1 — AWP balancing (recommendation):**
+
+- **(d) Keep the AWP addition out of training and use it as an evaluation group.** It has now been used once, for the measurement above.
+- At the strict operating point AWPers are not flagged (0/100 pros, 0/17 test). At the lenient thresholds they are (13–21% pros, 12/17 test).
+- Choose the strict operating point for the thesis and report the lenient AWP false-positive rate as a limitation. No AWP retraining.
+- Why not the other options:
+  - (b) weighting would need retraining for a problem absent at the strict threshold;
+  - (c) per-weapon calibration would rest on 14 AWP-heavy and 30 scout-heavy legitimate player-matches in the calibration split, too few for stable thresholds, and it would mean different thresholds per play style;
+  - (a) reporting the limitation alone is part of (d).
+- Training uses natural sampling with no class or sample weights (bags of up to 16 encounters, LightGBM without weights), so any weighting is a code change and needs approval.
+
+**Step 2 — Scout data plan:**
+
+- Training gap: 5,933 cheater vs 3,054 legitimate scout encounters, a gap of **2,879**. In player-matches, 364 vs 122, so **+242** legitimate scout-heavy player-matches. That is about 2,200 encounters at the CS2CD median of 9 scout encounters per legitimate scout-heavy player-match (*estimate*).
+- **Pro data cannot supply it:** 1,052 scout kills across all 1,988 OpenCS2 demos, at most 21 per player.
+- **Matchmaking demos with later-ban labels:**
+  - Own and friends' matches can be downloaded from "Your Matches", reportedly for about 30 days (no official Valve figure).
+  - Players are labelled with `GetPlayerBans` after a delay.
+  - Negatives are noisy: "not banned" is not "legitimate".
+  - Yield: CS2CD has about 0.26 legitimate scout-heavy player-matches per match (210 over 795 matches), so **+242 needs on the order of 900 matches** (*estimate*).
+  - Other players' SteamIDs are personal data, which needs ethics and GDPR handling.
+- **FACEIT:** the official Data API v4 shows a `demo_url` field in match details and lists a player-bans endpoint, behind an API key. Its research-use terms are not stated ("Property of FACEIT LTD"), so they must be checked first.
+- **Friends:** best label quality, but few people. Used for evaluation, not training (Step 3).
+- Not usable: Kaggle (5 channels, 32 Hz), ESTA (2 Hz).
+
+**Step 3 — Friend-session protocol:** `research/realtime/server/FRIEND_SESSIONS.md`. Reviewed once by the anticheat-reviewer agent; all findings applied.
+
+- **Evaluation only:** no training, no threshold choice.
+- **Within-person design:** every person plays normal, scout-only and AWP-only, in counterbalanced order, analysed as paired differences.
+- **People are the unit of evidence:** at least 12 distinct people; the first 6 player-matches per person per mode, in time order; at least 5 encounters per player-match.
+- **Primary result:** people flagged at least once / N, with a person-level bootstrap. The exact interval for 72 player-matches (0–5.0% with zero flags) is secondary.
+- **Blind collection:** no live scores during the period; all results from offline scoring after collection closes; a stopping date fixed in advance.
+- **Normal mode is the domain-shift control.**
+- One third of the people are set aside as a single-use final hold-out.
+- **Server setup:** `start_server.ps1` gained `-BotQuota` (0 for humans-only) and `-Competitive` (standard round timings instead of the bot-test shortcuts); the script parses cleanly. No `mp_warmup_end` or `mp_restartgame`.
+- The consent wording is left to the author, supervisor and ethics process.
+
+**Step 4 — Targets and re-count:**
+
+| Weapon group | Training target | Evaluation |
+|---|---|---|
+| AWP | none now | pro AWPers (done, 100) + friends AWP-only |
+| Scout | +242 legitimate scout-heavy player-matches (about 2,200–2,900 encounters), from about 900 matchmaking matches with later-ban labels, if approved | friends scout-only (≥ 12 people) |
+| Auto-sniper, scoped rifle | none (too rare: 21 cheater encounters on AUG/SG 553 in training) | report as limitation |
+
+Re-count by weapon and label: **unchanged from Entry 26**, because no data was added. Evaluation groups so far: OpenCS2 AWP addition (100 player-maps; 1,330 AWP and 129 scout encounters, all legitimate), OpenCS2 reserve riflers (1,069 player-maps), friend sessions (0, not started).
+
+**Remaining steps (need approval):**
+
+1. Decide the thesis operating point (strict recommended) and whether to report the scout-shortcut finding as a main result.
+2. Decide whether to collect matchmaking demos with later-ban labels (ethics, GDPR, about 900 matches).
+3. Run the friend sessions under `FRIEND_SESSIONS.md` after consent approval.
+4. Only then consider retraining with scout data (OpenCS2 plan steps 4–7), with selection on validation and a new test cohort.
+
+---
+
+### Entry 28 — Scoped-Weapon Statistics Document
+**Date:** 2026-10-22
+**Status:** Documentation only.
+
+The scoped-weapon statistics (CS2CD, staged pro data, projections for the remaining pro demos, and the balance gap) are written in `research/opencs2/SCOUT_AWP_BALANCE.md`. The CS2CD and staged-pro tables can be regenerated with `research/scripts/count_scoped_encounters.py`.
+
+Key numbers: the training split has 5,933 cheating vs 2,925 not-cheating **scout** encounters (gap 3,008) and no AWP imbalance (1,717 vs 4,776). The staged pro data holds 301 scout encounters. The remaining pro demos could add about 840 scout encounters from the best 100 demos (46 GB), or about 1,950 from all 491 (228 GB). The scout ratio of 2.3 encounters per kill is based on only 130 kills. Pro data alone cannot close the scout gap.
+
 **Earlier run status (paused 2026-10-19, night):**
 
 - The target was reduced from 211 to **100** as a first stage. The manifest records the change; re-running with `--target 211` later continues from 101 with the same selection.

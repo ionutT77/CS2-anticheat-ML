@@ -1359,6 +1359,33 @@ Key numbers: the training split has 5,933 cheating vs 2,925 not-cheating **scout
 
 ---
 
+### Entry 29 — All-Weapon Research (USP-S and Other Groups)
+**Date:** 2026-10-27
+**Status:** Research only; no training, download or data change. Written in `research/opencs2/OTHER_WEAPONS.md`; reproduce with `python scripts/analyze_weapon_groups.py` (from `research/`, saved scores only; it asserts the published strict test result of 67 TP / 4 FP).
+
+- **Only the scout has more cheating than not-cheating encounters** in the training split (67% cheating). Against the overall share (16.3%), the scout (67%), auto-sniper (44%), Deagle (28%) and AWP (26%) carry label information by themselves; the USP-S group (11%) is below average.
+- **False positives by main weapon** (strict threshold, validation + test): only scout players are flagged in number (15/87 pooled, 4/36 test only). At the lenient `accuracy` threshold: scout 64%, AWP 24%, Deagle 13.5%, rifle and SMG about 1%.
+- **USP-S:** no player-level problem (0 of 22 USP-S-main legitimate players flagged on test; Spearman rho of score vs USP-S share -0.03). The Deagle behaves like a weaker scout (FPR rises with share, 4% to 22%). Confidence medium: only 49 legitimate USP-S-main players. CS2CD cannot separate the USP-S from the P2000 (both `hkp2000`).
+- **The live "false detections" are provisional flags:** the first hit of the 2026-10-11 live session was a USP-S hit with an encounter score of 0.93, giving a provisional player score of 0.73 after 1 encounter (flagged); 0.26 after 3 and 0.12 after 18. About 3% of legitimate USP-S hits score above 0.5 alone. Proposed fix: no flag before about 10 encounters (changes `realtime/live_scoring.py`; needs approval).
+- **Weapon-only baseline** AUC 0.874 on test (source-only 0.888, detector 0.973); among players with at least 20% pistol encounters the detector keeps 0.974 and weapon-only drops to 0.837.
+- Untested: whether first-shot pistol hits explain the high pistol scores (needs the CS2CD window cache, not on this machine).
+- A review agent checked the split and threshold handling; its caveats (validation is not independent of the detector; test-only columns; encounter AUC is clustered by player) are in the document.
+
+### Entry 30 — Pro Scout Data Addition (stopped at the yield rule)
+**Date:** 2026-10-27 to 2026-10-28
+**Status:** Data addition finished. No training; `awp_v1` and CS2CD untouched. Script `scripts/add_opencs2_scout.py` (4 tests in `tests/test_add_opencs2_scout.py`), output `research/data/opencs2/scout_v1/`, log `local_runs/opencs2_scout_run1.log`.
+
+- Demos were taken in order of scout kills, skipping the ones already in `awp_v1`. A player-map with at least 3 scout encounters goes to the training addition, everyone else to the reserve; all labelled legitimate.
+- **Result:** 238 demos (106 GB; 209 usable, 29 skipped for missing properties). Training addition: **781 scout encounters** in 183 player-maps (4,320 encounters in all). Reserve: 362 scout encounters (41,737 in all). No duplicate windows against CS2CD. Together with the 301 from the AWP run: 1,444 pro scout encounters.
+- **Stopped by the user's rule** (last 5 usable demos average at most 2 scout encounters). The remaining 253 demos have exactly 1 scout kill each (about 450 more encounters, about 120 GB), not downloaded.
+- **Gap:** about 2,707 were needed for 1:1 (after the 301). 1,143 new cover 42%; about 1,560 still missing (1,926 without the reserve).
+- **The added players are not scout players:** only 2 of 183 added player-maps use the scout for at least half of their encounters (median share 17%), against 397 cheating vs 170 legitimate scout-main player-matches in the CS2CD training split. At the player level the scout imbalance is barely changed, so reweighting is likely needed.
+- **Yield was below the estimate** (about 1,950 for all demos was estimated; about 1,140 obtained plus about 450 left).
+- **Bugs found and fixed during the run:** `setdefault(..., executor.submit(...))` submitted a duplicate download on every call (several threads writing the same `.part` file, giving WinError 32; I first guessed antivirus, which was wrong); added lock-tolerant fetch, a disk-space guard (`--min-free-gb 40`) and the yield stop rule (`--stop-mean 2 --stop-window 5`).
+- **Next (the user will run friend sessions next time):** decide whether friend scout data is evaluation, training or split by person before the first session; ask for scout-only players, who are the missing group; then a written reweighting protocol (LightGBM on validation, CPU) before any retraining.
+
+---
+
 ## Phase 3: Evaluation & Thesis Writing
 
 > *Entries will be added when Phase 2 is complete*

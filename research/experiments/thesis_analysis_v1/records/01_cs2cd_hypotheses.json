@@ -1,0 +1,899 @@
+{
+ "cheaters_per_reviewed_match": {
+  "1": 47,
+  "2": 41,
+  "3": 39,
+  "4": 51,
+  "5": 59,
+  "6": 29,
+  "7": 29,
+  "8": 13,
+  "9": 7,
+  "10": 2
+ },
+ "T1_source_among_negatives": [
+  {
+   "split": "validation",
+   "neg_unrev": 690,
+   "neg_rev": 216,
+   "AUC score->reviewed folder": 0.603,
+   "ci": [
+    0.535,
+    0.673
+   ],
+   "median unrev": 0.0233,
+   "median rev": 0.0356,
+   "FP accuracy unrev": "60/690",
+   "FP accuracy rev": "10/216",
+   "FP default_0_5 unrev": "41/690",
+   "FP default_0_5 rev": "4/216",
+   "FP fpr_1pct unrev": "12/690",
+   "FP fpr_1pct rev": "0/216"
+  },
+  {
+   "split": "calibration",
+   "neg_unrev": 472,
+   "neg_rev": 153,
+   "AUC score->reviewed folder": 0.612,
+   "ci": [
+    0.527,
+    0.702
+   ],
+   "median unrev": 0.0246,
+   "median rev": 0.038,
+   "FP accuracy unrev": "40/472",
+   "FP accuracy rev": "3/153",
+   "FP default_0_5 unrev": "33/472",
+   "FP default_0_5 rev": "1/153",
+   "FP fpr_1pct unrev": "6/472",
+   "FP fpr_1pct rev": "0/153"
+  },
+  {
+   "split": "test",
+   "neg_unrev": 711,
+   "neg_rev": 205,
+   "AUC score->reviewed folder": 0.693,
+   "ci": [
+    0.632,
+    0.755
+   ],
+   "median unrev": 0.0224,
+   "median rev": 0.0407,
+   "FP accuracy unrev": "38/711",
+   "FP accuracy rev": "11/205",
+   "FP default_0_5 unrev": "25/711",
+   "FP default_0_5 rev": "3/205",
+   "FP fpr_1pct unrev": "4/711",
+   "FP fpr_1pct rev": "0/205"
+  }
+ ],
+ "T1_auc_by_cohort": [
+  {
+   "split": "validation",
+   "AUC all": 0.9425,
+   "AUC reviewed only": 0.9496,
+   "ci reviewed": [
+    0.926,
+    0.969
+   ],
+   "AUC source-only": 0.8808
+  },
+  {
+   "split": "calibration",
+   "AUC all": 0.9414,
+   "AUC reviewed only": 0.9621,
+   "ci reviewed": [
+    0.938,
+    0.983
+   ],
+   "AUC source-only": 0.8776
+  },
+  {
+   "split": "test",
+   "AUC all": 0.9727,
+   "AUC reviewed only": 0.971,
+   "ci reviewed": [
+    0.959,
+    0.981
+   ],
+   "AUC source-only": 0.8881
+  }
+ ],
+ "T2_within_match": [
+  {
+   "split": "validation",
+   "within-match AUC": 0.9381,
+   "ci": [
+    0.853,
+    0.982
+   ],
+   "matches": 48
+  },
+  {
+   "split": "calibration",
+   "within-match AUC": 0.9611,
+   "ci": [
+    0.91,
+    0.991
+   ],
+   "matches": 31
+  },
+  {
+   "split": "test",
+   "within-match AUC": 0.9674,
+   "ci": [
+    0.938,
+    0.988
+   ],
+   "matches": 48
+  }
+ ],
+ "T3_weapon": [
+  {
+   "split": "validation",
+   "n": 1112,
+   "AUC raw": 0.9425,
+   "AUC weapon-balanced": 0.7945,
+   "strict recall raw": 0.286,
+   "strict recall balanced": 0.131,
+   "strict FPR raw %": 1.32,
+   "strict FPR balanced %": 3.64,
+   "AUC weapon-shares-only(scout share)": 0.8128,
+   "Scout: n neg/pos": "51/114",
+   "Scout: AUC": 0.753,
+   "Scout: strict recall": 0.465,
+   "Scout: strict FP": "11/51",
+   "AWP: n neg/pos": "44/23",
+   "AWP: AUC": 0.89,
+   "AWP: strict recall": 0.043,
+   "AWP: strict FP": "0/44",
+   "Rifle: n neg/pos": "585/30",
+   "Rifle: AUC": 0.861,
+   "Rifle: strict recall": 0.067,
+   "Rifle: strict FP": "0/585",
+   "non-scout-main: AUC": 0.9229,
+   "non-scout-main: strict recall": 0.065,
+   "non-scout-main: positives": 92,
+   "zero-scout players: AUC": 0.9068,
+   "zero-scout: strict recall": "3/56",
+   "zero-scout: strict FP": "0/726"
+  },
+  {
+   "split": "calibration",
+   "n": 743,
+   "AUC raw": 0.9414,
+   "AUC weapon-balanced": 0.8645,
+   "strict recall raw": 0.169,
+   "strict recall balanced": 0.055,
+   "strict FPR raw %": 0.96,
+   "strict FPR balanced %": 1.82,
+   "AUC weapon-shares-only(scout share)": 0.7537,
+   "Scout: n neg/pos": "42/55",
+   "Scout: AUC": 0.695,
+   "Scout: strict recall": 0.309,
+   "Scout: strict FP": "5/42",
+   "AWP: n neg/pos": "41/16",
+   "AWP: AUC": 0.86,
+   "AWP: strict recall": 0.062,
+   "AWP: strict FP": "1/41",
+   "Rifle: n neg/pos": "405/23",
+   "Rifle: AUC": 0.976,
+   "Rifle: strict recall": 0.0,
+   "Rifle: strict FP": "0/405",
+   "non-scout-main: AUC": 0.95,
+   "non-scout-main: strict recall": 0.048,
+   "non-scout-main: positives": 63,
+   "zero-scout players: AUC": 0.9538,
+   "zero-scout: strict recall": "2/42",
+   "zero-scout: strict FP": "0/482"
+  },
+  {
+   "split": "test",
+   "n": 1130,
+   "AUC raw": 0.9727,
+   "AUC weapon-balanced": 0.9036,
+   "strict recall raw": 0.313,
+   "strict recall balanced": 0.126,
+   "strict FPR raw %": 0.44,
+   "strict FPR balanced %": 1.47,
+   "AUC weapon-shares-only(scout share)": 0.8087,
+   "Scout: n neg/pos": "36/111",
+   "Scout: AUC": 0.847,
+   "Scout: strict recall": 0.505,
+   "Scout: strict FP": "4/36",
+   "AWP: n neg/pos": "48/23",
+   "AWP: AUC": 0.887,
+   "AWP: strict recall": 0.13,
+   "AWP: strict FP": "0/48",
+   "Rifle: n neg/pos": "613/39",
+   "Rifle: AUC": 0.982,
+   "Rifle: strict recall": 0.051,
+   "Rifle: strict FP": "0/613",
+   "non-scout-main: AUC": 0.9681,
+   "non-scout-main: strict recall": 0.107,
+   "non-scout-main: positives": 103,
+   "zero-scout players: AUC": 0.9641,
+   "zero-scout: strict recall": "6/61",
+   "zero-scout: strict FP": "0/732"
+  },
+  {
+   "split": "val+cal",
+   "n": 1855,
+   "AUC raw": 0.942,
+   "AUC weapon-balanced": 0.8251,
+   "strict recall raw": 0.244,
+   "strict recall balanced": 0.095,
+   "strict FPR raw %": 1.18,
+   "strict FPR balanced %": 2.6,
+   "AUC weapon-shares-only(scout share)": 0.7911,
+   "Scout: n neg/pos": "93/169",
+   "Scout: AUC": 0.74,
+   "Scout: strict recall": 0.414,
+   "Scout: strict FP": "16/93",
+   "AWP: n neg/pos": "85/39",
+   "AWP: AUC": 0.877,
+   "AWP: strict recall": 0.051,
+   "AWP: strict FP": "1/85",
+   "Rifle: n neg/pos": "990/53",
+   "Rifle: AUC": 0.909,
+   "Rifle: strict recall": 0.038,
+   "Rifle: strict FP": "0/990",
+   "non-scout-main: AUC": 0.9334,
+   "non-scout-main: strict recall": 0.058,
+   "non-scout-main: positives": 155,
+   "zero-scout players: AUC": 0.9265,
+   "zero-scout: strict recall": "5/98",
+   "zero-scout: strict FP": "0/1208"
+  }
+ ],
+ "T6_strict_fp": [
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/233",
+   "map": "de_anubis",
+   "encounters": 23,
+   "main": "Scout",
+   "Scout": 0.4348,
+   "cal": 0.8859,
+   "tcn": 0.9002,
+   "lgbm": 0.9531
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/233",
+   "map": "de_anubis",
+   "encounters": 26,
+   "main": "Scout",
+   "Scout": 0.5769,
+   "cal": 0.865,
+   "tcn": 0.8774,
+   "lgbm": 0.9341
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/237",
+   "map": "de_vertigo",
+   "encounters": 10,
+   "main": "Scout",
+   "Scout": 0.5,
+   "cal": 0.8603,
+   "tcn": 0.9308,
+   "lgbm": 0.7532
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/241",
+   "map": "de_ancient",
+   "encounters": 12,
+   "main": "Scout",
+   "Scout": 0.9167,
+   "cal": 0.8744,
+   "tcn": 0.8873,
+   "lgbm": 0.9444
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/241",
+   "map": "de_ancient",
+   "encounters": 33,
+   "main": "Scout",
+   "Scout": 0.8485,
+   "cal": 0.8576,
+   "tcn": 0.8926,
+   "lgbm": 0.8562
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/241",
+   "map": "de_ancient",
+   "encounters": 12,
+   "main": "AWP",
+   "Scout": 0.25,
+   "cal": 0.8895,
+   "tcn": 0.9087,
+   "lgbm": 0.9422
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/246",
+   "map": "de_vertigo",
+   "encounters": 69,
+   "main": "Scout",
+   "Scout": 0.9565,
+   "cal": 0.8683,
+   "tcn": 0.9074,
+   "lgbm": 0.858
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/248",
+   "map": "de_ancient",
+   "encounters": 12,
+   "main": "Scout",
+   "Scout": 0.8333,
+   "cal": 0.876,
+   "tcn": 0.9081,
+   "lgbm": 0.8884
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/248",
+   "map": "de_ancient",
+   "encounters": 5,
+   "main": "USP-S/P2000",
+   "Scout": 0.4,
+   "cal": 0.9086,
+   "tcn": 0.949,
+   "lgbm": 0.8958
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/51",
+   "map": "de_inferno",
+   "encounters": 6,
+   "main": "Scout",
+   "Scout": 0.6667,
+   "cal": 0.8589,
+   "tcn": 0.8924,
+   "lgbm": 0.8624
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/51",
+   "map": "de_inferno",
+   "encounters": 9,
+   "main": "Scout",
+   "Scout": 0.8889,
+   "cal": 0.8847,
+   "tcn": 0.9048,
+   "lgbm": 0.9344
+  },
+  {
+   "split": "test",
+   "match_id": "no_cheater_present/64",
+   "map": "de_train",
+   "encounters": 10,
+   "main": "Scout",
+   "Scout": 1.0,
+   "cal": 0.8965,
+   "tcn": 0.9717,
+   "lgbm": 0.7812
+  },
+  {
+   "split": "calibration",
+   "match_id": "no_cheater_present/66",
+   "map": "de_train",
+   "encounters": 12,
+   "main": "Scout",
+   "Scout": 0.9167,
+   "cal": 0.8841,
+   "tcn": 0.9449,
+   "lgbm": 0.8117
+  },
+  {
+   "split": "test",
+   "match_id": "no_cheater_present/84",
+   "map": "cs_office",
+   "encounters": 15,
+   "main": "Scout",
+   "Scout": 0.8667,
+   "cal": 0.9107,
+   "tcn": 0.9924,
+   "lgbm": 0.7735
+  },
+  {
+   "split": "test",
+   "match_id": "no_cheater_present/84",
+   "map": "cs_office",
+   "encounters": 23,
+   "main": "Scout",
+   "Scout": 0.6957,
+   "cal": 0.8544,
+   "tcn": 0.8818,
+   "lgbm": 0.8745
+  },
+  {
+   "split": "test",
+   "match_id": "no_cheater_present/84",
+   "map": "cs_office",
+   "encounters": 29,
+   "main": "Scout",
+   "Scout": 0.6897,
+   "cal": 0.8995,
+   "tcn": 0.9382,
+   "lgbm": 0.8931
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/89",
+   "map": "de_anubis",
+   "encounters": 21,
+   "main": "Scout",
+   "Scout": 0.8571,
+   "cal": 0.8586,
+   "tcn": 0.8736,
+   "lgbm": 0.9173
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/89",
+   "map": "de_anubis",
+   "encounters": 18,
+   "main": "Scout",
+   "Scout": 0.8333,
+   "cal": 0.8905,
+   "tcn": 0.9363,
+   "lgbm": 0.8636
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/92",
+   "map": "de_mirage",
+   "encounters": 15,
+   "main": "Scout",
+   "Scout": 0.9333,
+   "cal": 0.9239,
+   "tcn": 0.9482,
+   "lgbm": 0.9543
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/92",
+   "map": "de_mirage",
+   "encounters": 36,
+   "main": "Scout",
+   "Scout": 0.8333,
+   "cal": 0.8826,
+   "tcn": 0.8895,
+   "lgbm": 0.972
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/92",
+   "map": "de_mirage",
+   "encounters": 23,
+   "main": "Scout",
+   "Scout": 0.913,
+   "cal": 0.9295,
+   "tcn": 0.9729,
+   "lgbm": 0.8997
+  },
+  {
+   "split": "validation",
+   "match_id": "no_cheater_present/98",
+   "map": "de_overpass",
+   "encounters": 34,
+   "main": "Scout",
+   "Scout": 0.6176,
+   "cal": 0.8992,
+   "tcn": 0.923,
+   "lgbm": 0.9378
+  }
+ ],
+ "unreviewed_matches_by_count_over_0.5": {
+  "calibration": {
+   "0": 40,
+   "4": 2,
+   "2": 2,
+   "3": 1,
+   "6": 1,
+   "5": 1,
+   "7": 1
+  },
+  "test": {
+   "0": 64,
+   "1": 3,
+   "4": 2,
+   "3": 1,
+   "9": 1,
+   "2": 1
+  },
+  "validation": {
+   "0": 54,
+   "1": 6,
+   "3": 3,
+   "2": 3,
+   "5": 2,
+   "4": 1,
+   "6": 1
+  }
+ },
+ "clustering_test": {
+  "observed": 23,
+  "perm_mean": 17.5915,
+  "p": 0.0325
+ },
+ "T7_operating_points": [
+  {
+   "split": "validation",
+   "policy": "accuracy",
+   "FP": "70/906",
+   "FPR %": 7.73,
+   "FPR exact95 %": [
+    6.07,
+    9.66
+   ],
+   "FPR cluster95 %": [
+    4.77,
+    11.09
+   ],
+   "recall": 0.85,
+   "recall cluster95": [
+    0.784,
+    0.902
+   ],
+   "precision": 0.714
+  },
+  {
+   "split": "validation",
+   "policy": "f1",
+   "FP": "75/906",
+   "FPR %": 8.28,
+   "FPR exact95 %": [
+    6.57,
+    10.27
+   ],
+   "FPR cluster95 %": [
+    5.2,
+    11.74
+   ],
+   "recall": 0.874,
+   "recall cluster95": [
+    0.814,
+    0.922
+   ],
+   "precision": 0.706
+  },
+  {
+   "split": "validation",
+   "policy": "default_0_5",
+   "FP": "45/906",
+   "FPR %": 4.97,
+   "FPR exact95 %": [
+    3.65,
+    6.59
+   ],
+   "FPR cluster95 %": [
+    2.78,
+    7.51
+   ],
+   "recall": 0.718,
+   "recall cluster95": [
+    0.624,
+    0.796
+   ],
+   "precision": 0.767
+  },
+  {
+   "split": "validation",
+   "policy": "fpr_1pct",
+   "FP": "12/906",
+   "FPR %": 1.32,
+   "FPR exact95 %": [
+    0.69,
+    2.3
+   ],
+   "FPR cluster95 %": [
+    0.44,
+    2.48
+   ],
+   "recall": 0.286,
+   "recall cluster95": [
+    0.193,
+    0.376
+   ],
+   "precision": 0.831
+  },
+  {
+   "split": "validation",
+   "policy": "fpr_0_1pct",
+   "FP": "5/906",
+   "FPR %": 0.55,
+   "FPR exact95 %": [
+    0.18,
+    1.28
+   ],
+   "FPR cluster95 %": [
+    0.11,
+    1.21
+   ],
+   "recall": 0.18,
+   "recall cluster95": [
+    0.111,
+    0.255
+   ],
+   "precision": 0.881
+  },
+  {
+   "split": "calibration",
+   "policy": "accuracy",
+   "FP": "43/625",
+   "FPR %": 6.88,
+   "FPR exact95 %": [
+    5.02,
+    9.16
+   ],
+   "FPR cluster95 %": [
+    3.05,
+    11.02
+   ],
+   "recall": 0.831,
+   "recall cluster95": [
+    0.725,
+    0.912
+   ],
+   "precision": 0.695
+  },
+  {
+   "split": "calibration",
+   "policy": "f1",
+   "FP": "48/625",
+   "FPR %": 7.68,
+   "FPR exact95 %": [
+    5.72,
+    10.05
+   ],
+   "FPR cluster95 %": [
+    3.6,
+    12.12
+   ],
+   "recall": 0.864,
+   "recall cluster95": [
+    0.779,
+    0.935
+   ],
+   "precision": 0.68
+  },
+  {
+   "split": "calibration",
+   "policy": "default_0_5",
+   "FP": "34/625",
+   "FPR %": 5.44,
+   "FPR exact95 %": [
+    3.8,
+    7.52
+   ],
+   "FPR cluster95 %": [
+    1.97,
+    9.34
+   ],
+   "recall": 0.593,
+   "recall cluster95": [
+    0.459,
+    0.716
+   ],
+   "precision": 0.673
+  },
+  {
+   "split": "calibration",
+   "policy": "fpr_1pct",
+   "FP": "6/625",
+   "FPR %": 0.96,
+   "FPR exact95 %": [
+    0.35,
+    2.08
+   ],
+   "FPR cluster95 %": [
+    0.0,
+    2.23
+   ],
+   "recall": 0.169,
+   "recall cluster95": [
+    0.085,
+    0.262
+   ],
+   "precision": 0.769
+  },
+  {
+   "split": "calibration",
+   "policy": "fpr_0_1pct",
+   "FP": "0/625",
+   "FPR %": 0.0,
+   "FPR exact95 %": [
+    0.0,
+    0.59
+   ],
+   "FPR cluster95 %": [
+    0.0,
+    0.0
+   ],
+   "recall": 0.102,
+   "recall cluster95": [
+    0.03,
+    0.185
+   ],
+   "precision": 1.0
+  },
+  {
+   "split": "test",
+   "policy": "accuracy",
+   "FP": "49/916",
+   "FPR %": 5.35,
+   "FPR exact95 %": [
+    3.98,
+    7.01
+   ],
+   "FPR cluster95 %": [
+    2.9,
+    8.45
+   ],
+   "recall": 0.86,
+   "recall cluster95": [
+    0.812,
+    0.905
+   ],
+   "precision": 0.79
+  },
+  {
+   "split": "test",
+   "policy": "f1",
+   "FP": "58/916",
+   "FPR %": 6.33,
+   "FPR exact95 %": [
+    4.84,
+    8.11
+   ],
+   "FPR cluster95 %": [
+    3.77,
+    9.52
+   ],
+   "recall": 0.902,
+   "recall cluster95": [
+    0.86,
+    0.938
+   ],
+   "precision": 0.769
+  },
+  {
+   "split": "test",
+   "policy": "default_0_5",
+   "FP": "28/916",
+   "FPR %": 3.06,
+   "FPR exact95 %": [
+    2.04,
+    4.39
+   ],
+   "FPR cluster95 %": [
+    1.08,
+    5.84
+   ],
+   "recall": 0.72,
+   "recall cluster95": [
+    0.642,
+    0.796
+   ],
+   "precision": 0.846
+  },
+  {
+   "split": "test",
+   "policy": "fpr_1pct",
+   "FP": "4/916",
+   "FPR %": 0.44,
+   "FPR exact95 %": [
+    0.12,
+    1.11
+   ],
+   "FPR cluster95 %": [
+    0.0,
+    1.23
+   ],
+   "recall": 0.313,
+   "recall cluster95": [
+    0.228,
+    0.4
+   ],
+   "precision": 0.944
+  },
+  {
+   "split": "test",
+   "policy": "fpr_0_1pct",
+   "FP": "3/916",
+   "FPR %": 0.33,
+   "FPR exact95 %": [
+    0.07,
+    0.95
+   ],
+   "FPR cluster95 %": [
+    0.0,
+    0.88
+   ],
+   "recall": 0.21,
+   "recall cluster95": [
+    0.132,
+    0.292
+   ],
+   "precision": 0.938
+  }
+ ],
+ "T7_threshold_resampling": {
+  "threshold_q": [
+   0.6876,
+   0.8528,
+   0.8841
+  ],
+  "test_fpr_q": [
+   0.0033,
+   0.0044,
+   0.0164
+  ],
+  "test_recall_q": [
+   0.2383,
+   0.3131,
+   0.5748
+  ]
+ },
+ "T8": [
+  {
+   "split": "train",
+   "AUC encounters-only": 0.466,
+   "median enc pos/neg": "17/20"
+  },
+  {
+   "split": "validation",
+   "AUC encounters-only": 0.42,
+   "median enc pos/neg": "13/18",
+   "pos median score by match cheaters 1 / 2-3 / 4+": "0.35 (n=9) / 0.42 (n=20) / 0.77 (n=177)",
+   "strict recall by match cheaters 1 / 2-3 / 4+": "0.22 / 0.05 / 0.32",
+   "AUC by encounters <5 / 5-14 / 15+": "0.913 (n=153) / 0.946 (n=288) / 0.940 (n=671)"
+  },
+  {
+   "split": "calibration",
+   "AUC encounters-only": 0.471,
+   "median enc pos/neg": "17/20",
+   "pos median score by match cheaters 1 / 2-3 / 4+": "0.16 (n=7) / 0.53 (n=9) / 0.65 (n=102)",
+   "strict recall by match cheaters 1 / 2-3 / 4+": "0.00 / 0.22 / 0.18",
+   "AUC by encounters <5 / 5-14 / 15+": "0.896 (n=91) / 0.850 (n=140) / 0.964 (n=512)"
+  },
+  {
+   "split": "test",
+   "AUC encounters-only": 0.369,
+   "median enc pos/neg": "12/20",
+   "pos median score by match cheaters 1 / 2-3 / 4+": "0.19 (n=6) / 0.71 (n=24) / 0.77 (n=184)",
+   "strict recall by match cheaters 1 / 2-3 / 4+": "0.00 / 0.12 / 0.35",
+   "AUC by encounters <5 / 5-14 / 15+": "0.929 (n=141) / 0.967 (n=298) / 0.982 (n=691)"
+  }
+ ],
+ "metadata_baselines": [
+  {
+   "features": "weapon shares",
+   "validation AUC": 0.8804,
+   "validation AUC reviewed": 0.883,
+   "calibration AUC": 0.8455,
+   "calibration AUC reviewed": 0.8569
+  },
+  {
+   "features": "weapon shares + log encounters",
+   "validation AUC": 0.8681,
+   "validation AUC reviewed": 0.8855,
+   "calibration AUC": 0.8412,
+   "calibration AUC reviewed": 0.8652
+  },
+  {
+   "features": "weapon shares + log encounters + match cheaters (LEAKY: uses labels of others)",
+   "validation AUC": 0.9297,
+   "validation AUC reviewed": 0.8653,
+   "calibration AUC": 0.9243,
+   "calibration AUC reviewed": 0.8399
+  }
+ ]
+}

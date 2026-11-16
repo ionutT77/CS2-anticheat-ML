@@ -1,0 +1,130 @@
+{
+ "P2": [
+  {
+   "cohort": "awp_v1 addition (pro AWPers) [second use]",
+   "player-maps": 100,
+   "people": 78,
+   "median score": 0.117,
+   "max": 0.427,
+   "accuracy": "13/100 = 13.0% exact[7.1, 21.2] person-boot[6.12, 20.39]; people 12/78",
+   "f1": "21/100 = 21.0% exact[13.5, 30.3] person-boot[13.27, 29.71]; people 20/78",
+   "default_0_5": "0/100 = 0.0% exact[0.0, 3.6] person-boot[0.0, 0.0]; people 0/78",
+   "fpr_1pct": "0/100 = 0.0% exact[0.0, 3.6] person-boot[0.0, 0.0]; people 0/78"
+  },
+  {
+   "cohort": "awp_v1 reserve [second use]",
+   "player-maps": 1070,
+   "people": 650,
+   "median score": 0.02,
+   "max": 0.303,
+   "accuracy": "3/1070 = 0.3% exact[0.1, 0.8] person-boot[0.0, 0.65]; people 3/650",
+   "f1": "4/1070 = 0.4% exact[0.1, 1.0] person-boot[0.09, 0.78]; people 4/650",
+   "default_0_5": "0/1070 = 0.0% exact[0.0, 0.3] person-boot[0.0, 0.0]; people 0/650",
+   "fpr_1pct": "0/1070 = 0.0% exact[0.0, 0.3] person-boot[0.0, 0.0]; people 0/650"
+  },
+  {
+   "cohort": "scout_v1 addition (>=3 scout encounters) [first use]",
+   "player-maps": 183,
+   "people": 136,
+   "median score": 0.076,
+   "max": 0.396,
+   "accuracy": "9/183 = 4.9% exact[2.3, 9.1] person-boot[1.73, 8.43]; people 8/136",
+   "f1": "14/183 = 7.7% exact[4.2, 12.5] person-boot[3.47, 12.04]; people 11/136",
+   "default_0_5": "0/183 = 0.0% exact[0.0, 2.0] person-boot[0.0, 0.0]; people 0/136",
+   "fpr_1pct": "0/183 = 0.0% exact[0.0, 2.0] person-boot[0.0, 0.0]; people 0/136"
+  },
+  {
+   "cohort": "scout_v1 reserve [first use]",
+   "player-maps": 1907,
+   "people": 951,
+   "median score": 0.021,
+   "max": 0.496,
+   "accuracy": "10/1907 = 0.5% exact[0.3, 1.0] person-boot[0.22, 0.89]; people 10/951",
+   "f1": "15/1907 = 0.8% exact[0.4, 1.3] person-boot[0.42, 1.21]; people 15/951",
+   "default_0_5": "0/1907 = 0.0% exact[0.0, 0.2] person-boot[0.0, 0.0]; people 0/951",
+   "fpr_1pct": "0/1907 = 0.0% exact[0.0, 0.2] person-boot[0.0, 0.0]; people 0/951"
+  },
+  {
+   "cohort": "scout_v1, scout share >= 30%",
+   "player-maps": 21,
+   "people": 21,
+   "median score": 0.098,
+   "max": 0.336,
+   "accuracy": "2/21 = 9.5% exact[1.2, 30.4] person-boot[0.0, 23.81]; people 2/21",
+   "f1": "2/21 = 9.5% exact[1.2, 30.4] person-boot[0.0, 23.81]; people 2/21",
+   "default_0_5": "0/21 = 0.0% exact[0.0, 16.1] person-boot[0.0, 0.0]; people 0/21",
+   "fpr_1pct": "0/21 = 0.0% exact[0.0, 16.1] person-boot[0.0, 0.0]; people 0/21"
+  },
+  {
+   "cohort": "both sets, AWP-main",
+   "player-maps": 405,
+   "people": 178,
+   "median score": 0.097,
+   "max": 0.496,
+   "accuracy": "34/405 = 8.4% exact[5.9, 11.5] person-boot[5.78, 11.25]; people 31/178",
+   "f1": "51/405 = 12.6% exact[9.5, 16.2] person-boot[9.37, 15.86]; people 42/178",
+   "default_0_5": "0/405 = 0.0% exact[0.0, 0.9] person-boot[0.0, 0.0]; people 0/178",
+   "fpr_1pct": "0/405 = 0.0% exact[0.0, 0.9] person-boot[0.0, 0.0]; people 0/178"
+  },
+  {
+   "cohort": "both sets, Scout-main",
+   "player-maps": 16,
+   "people": 16,
+   "median score": 0.092,
+   "max": 0.29,
+   "accuracy": "1/16 = 6.2% exact[0.2, 30.2] person-boot[0.0, 18.75]; people 1/16",
+   "f1": "1/16 = 6.2% exact[0.2, 30.2] person-boot[0.0, 18.75]; people 1/16",
+   "default_0_5": "0/16 = 0.0% exact[0.0, 20.6] person-boot[0.0, 0.0]; people 0/16",
+   "fpr_1pct": "0/16 = 0.0% exact[0.0, 20.6] person-boot[0.0, 0.0]; people 0/16"
+  },
+  {
+   "cohort": "both sets, Rifle-main",
+   "player-maps": 2723,
+   "people": 1028,
+   "median score": 0.02,
+   "max": 0.192,
+   "accuracy": "0/2723 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1028",
+   "f1": "0/2723 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1028",
+   "default_0_5": "0/2723 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1028",
+   "fpr_1pct": "0/2723 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1028"
+  },
+  {
+   "cohort": "both sets, >=10 encounters",
+   "player-maps": 3196,
+   "people": 1115,
+   "median score": 0.022,
+   "max": 0.496,
+   "accuracy": "34/3196 = 1.1% exact[0.7, 1.5] person-boot[0.7, 1.46]; people 31/1115",
+   "f1": "52/3196 = 1.6% exact[1.2, 2.1] person-boot[1.12, 2.14]; people 43/1115",
+   "default_0_5": "0/3196 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1115",
+   "fpr_1pct": "0/3196 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1115"
+  },
+  {
+   "cohort": "both sets, all",
+   "player-maps": 3260,
+   "people": 1132,
+   "median score": 0.022,
+   "max": 0.496,
+   "accuracy": "35/3260 = 1.1% exact[0.7, 1.5] person-boot[0.73, 1.47]; people 32/1132",
+   "f1": "54/3260 = 1.7% exact[1.2, 2.2] person-boot[1.18, 2.19]; people 44/1132",
+   "default_0_5": "0/3260 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1132",
+   "fpr_1pct": "0/3260 = 0.0% exact[0.0, 0.1] person-boot[0.0, 0.0]; people 0/1132"
+  }
+ ],
+ "P3_icc": {
+  "person": 0.5381584902364944,
+  "main_weapon": 0.5529935680777209,
+  "person_after_weapon": 0.10246265486136419
+ },
+ "P3_reid_features": {
+  "hits": 23,
+  "total": 2794,
+  "chance": 0.001067303138568414
+ },
+ "P3_yaw_step": {
+  "distinct": 195,
+  "n": 2930,
+  "stable_within_person": 0.615595075239398,
+  "unique_to_one_person": 0.025597269624573378
+ }
+}

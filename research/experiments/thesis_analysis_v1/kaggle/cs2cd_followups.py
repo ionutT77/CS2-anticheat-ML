@@ -2,7 +2,11 @@
 # CS2CD follow-up experiments K1-K4 (see KAGGLE_SPEC.md next to this file)
 # =============================================================================
 # HOW TO USE ON KAGGLE
-#   1. New Notebook, Internet ON, Accelerator: GPU T4 (CPU also works, slower for K1/K3).
+#   0. Push the branch first:  git push -u origin thesis-analysis   (it exists only locally until you do;
+#      a private repository also needs a token in the clone URL).
+#   1. New Notebook, Internet ON. Build the cache in a CPU session (no GPU quota needed): the first
+#      chunk prints its time, so multiply by 795/12 before committing to the whole run. The run can be
+#      stopped and restarted; finished matches are skipped. GPU T4 only speeds up K1/K3.
 #   2. In one cell:
 #        !git clone --branch thesis-analysis <your repo url> /kaggle/working/repo
 #        %cd /kaggle/working/repo/research
@@ -75,6 +79,7 @@ def build_cache(cache, workers, chunk=12):
     for f in files:
         by_match.setdefault(f['path'].rsplit('.', 1)[0], []).append(f)
     raw = Path('data/cs2cd/raw'); done_dir = Path('data/cs2cd/processed/matches')
+    frozen = pd.read_parquet(V1 / 'events.parquet', columns=['npz', 'local_index', 'sha256'])
     todo = [m for m in sorted(by_match) if not (done_dir / (m.replace('/', '_') + '.npz')).exists()]
     t0 = time.time()
     for i in range(0, len(todo), chunk):
@@ -83,6 +88,13 @@ def build_cache(cache, workers, chunk=12):
             list(pool.map(lambda f: fetch(info, f, raw), [f for m in part for f in by_match[m]]))
         with cf.ProcessPoolExecutor(workers) as pool:
             list(pool.map(extract_match, [str(raw / (m + '.parquet')) for m in part]))
+        for m in part:                       # fail early: windows must equal the frozen experiment's
+            name = f'data/cs2cd/processed/matches/{m.replace("/", "_")}.npz'
+            g = frozen[frozen.npz == name]
+            if len(g):
+                with np.load(name) as d:
+                    w = d['x'][g.local_index.to_numpy()]
+                assert all(hashlib.sha256(a.tobytes()).hexdigest() == h for a, h in zip(w, g.sha256)), f'window hash mismatch in {m}'
         for m in part:                       # raw files are not needed again
             for f in by_match[m]:
                 (raw / f['path']).unlink()

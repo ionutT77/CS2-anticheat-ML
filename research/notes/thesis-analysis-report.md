@@ -362,7 +362,8 @@ Repository findings are tagged [V] or [I] above; everything from outside is tagg
   match-cluster intervals; a baseline ladder (weapon shares, LightGBM, blend); drop `fpr_0_1pct`;
   state the threshold's resampling range; contribution statement; update the stale README and
   `ARCHITECTURE_CHOICES.md`. For a certified operating point use clean negatives: with the 1,713
-  development pro player-maps, a threshold with zero flags bounds pro FPR below 0.18%. [E] Distribution-
+  development pro player-maps (585 people), a threshold with zero flags bounds pro FPR below 0.18% by
+  player-map and below 0.51% by person. [E] Distribution-
   free threshold selection with finite-sample guarantees is an established method
   ([Learn then Test, arXiv 2110.01052](https://arxiv.org/abs/2110.01052)).
 - Could go wrong: nothing technical; the headline gets less impressive.

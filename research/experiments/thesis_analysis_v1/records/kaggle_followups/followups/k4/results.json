@@ -1,0 +1,105 @@
+{
+ "seed": 20261116,
+ "device": "cpu",
+ "smoke": false,
+ "players": 7508,
+ "test_rows_scored": 0,
+ "lgbm_config": {
+  "n_estimators": 2000,
+  "num_leaves": 15,
+  "max_depth": -1,
+  "learning_rate": 0.025,
+  "min_child_samples": 35,
+  "colsample_bytree": 0.8,
+  "subsample": 0.8,
+  "subsample_freq": 1,
+  "reg_lambda": 10,
+  "reg_alpha": 0.3,
+  "n_jobs": 4,
+  "random_state": 42,
+  "verbosity": -1,
+  "metric": "None"
+ },
+ "K4_reweighted_lgbm": {
+  "metrics": [
+   {
+    "experiment": "K4 baseline: unweighted, all training rows",
+    "split": "validation",
+    "n": 1112,
+    "pos": 206,
+    "auc_all": 0.9345,
+    "auc_reviewed": 0.9454,
+    "auc_outside_lobbies": 0.9198,
+    "auc_weapon_balanced": 0.7852,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.053,
+    "best_iteration": 505,
+    "train_rows": 4523
+   },
+   {
+    "experiment": "K4 baseline: unweighted, all training rows",
+    "split": "calibration",
+    "n": 743,
+    "pos": 118,
+    "auc_all": 0.935,
+    "auc_reviewed": 0.9415,
+    "auc_outside_lobbies": 0.944,
+    "auc_weapon_balanced": 0.841,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.274,
+    "best_iteration": 505,
+    "train_rows": 4523
+   },
+   {
+    "experiment": "K4 lobbies removed from unreviewed negatives",
+    "split": "validation",
+    "n": 1112,
+    "pos": 206,
+    "auc_all": 0.9345,
+    "auc_reviewed": 0.9457,
+    "auc_outside_lobbies": 0.9184,
+    "auc_weapon_balanced": 0.7788,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.084,
+    "best_iteration": 812,
+    "train_rows": 4403
+   },
+   {
+    "experiment": "K4 lobbies removed from unreviewed negatives",
+    "split": "calibration",
+    "n": 743,
+    "pos": 118,
+    "auc_all": 0.932,
+    "auc_reviewed": 0.9407,
+    "auc_outside_lobbies": 0.9415,
+    "auc_weapon_balanced": 0.8325,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.274,
+    "best_iteration": 812,
+    "train_rows": 4403
+   },
+   {
+    "experiment": "K4 weapon-neutral weights + lobbies removed",
+    "split": "validation",
+    "n": 1112,
+    "pos": 206,
+    "auc_all": 0.932,
+    "auc_reviewed": 0.9435,
+    "auc_outside_lobbies": 0.9214,
+    "auc_weapon_balanced": 0.8024,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.095,
+    "best_iteration": 289,
+    "train_rows": 4403
+   },
+   {
+    "experiment": "K4 weapon-neutral weights + lobbies removed",
+    "split": "calibration",
+    "n": 743,
+    "pos": 118,
+    "auc_all": 0.9354,
+    "auc_reviewed": 0.9477,
+    "auc_outside_lobbies": 0.9432,
+    "auc_weapon_balanced": 0.8618,
+    "recall_at_1pct_fpr_outside_lobbies_in_sample": 0.29,
+    "best_iteration": 289,
+    "train_rows": 4403
+   }
+  ]
+ }
+}

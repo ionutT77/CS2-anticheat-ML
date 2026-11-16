@@ -195,8 +195,10 @@ All from labels, weapons and match numbers; no model scores involved [V] (`01`, 
   It says nothing about cheaters, whose "style" is their cheat configuration.
 - Mouse-sensitivity step as an account linker: stable for 62% of professionals across maps and shared by
   a median of 22 people, so too weak alone [V].
-- How to bound it: a split by contiguous blocks of match numbers (Kaggle spec K2). If AUC drops under the
-  blocked split, the drop is an upper bound on what adjacency (people, lobbies, cheat builds) contributes.
+- Bound, from the Kaggle run (section 5.1, K2): a split by contiguous blocks of match numbers scores
+  0.003 to 0.006 lower than a random match split for LightGBM, well inside the fold spread. So whatever
+  recurrence exists is not measurably inflating the tabular model's AUC. The neural model and people who
+  recur far apart in the numbering were not tested [V].
 
 ### 4.6 Noisy negatives: they make the model look worse at the lenient thresholds and hide nothing at the strict one. Confidence medium.
 
@@ -230,8 +232,9 @@ close to these. 32 of 1,132 people are flagged at least once at `accuracy`.
   problem. Scout share still moves the score: 10% flagged at `accuracy` when 20 to 50% of encounters are
   scout, 0.4% with none [V].
 - Channel shift against the CS2CD training statistics: `victim_footstep` is zero in every pro window; the
-  other channels are within about 0.25 standard deviations for non-sniper encounters [V]. Whether the
-  missing channel lowers scores cannot be tested here (needs CS2CD windows; Kaggle spec K3).
+  other channels are within about 0.25 standard deviations for non-sniper encounters [V]. Zeroing that
+  channel on CS2CD validation and calibration leaves scores unchanged (section 5.1, K3), so the missing
+  channel does not explain the low pro scores [V].
 - What it says about shift: pros (clean, high skill) score *lower* than CS2CD negatives, not higher.
   Skill alone does not trigger the model; sniper use does, at the lenient thresholds. Ordinary players
   are still untested.
@@ -298,15 +301,57 @@ Results are in sections 1, 3 and 4. Numbers not repeated there:
 scores; T4 and T5 on per-encounter scores. **Pro sets:** `awp_v1` second use; `scout_v1` first and only
 use. Neither can be called fresh any more.
 
-### 5.1 Kaggle spec written (not run)
+### 5.1 Kaggle follow-ups K1 to K4 (run 2026-11-16)
 
-`kaggle/cs2cd_followups.py` and `kaggle/KAGGLE_SPEC.md`: K1 weapon-normalised scoring, K2 blocked-split
-leakage bound, K3 footstep-channel masking, K4 weapon-neutral reweighted LightGBM. It rebuilds the window
-cache by streaming the raw data, checks every window hash against the frozen experiment, never scores
-test rows, and was smoke-tested locally on stand-in data (K1 to K4 only; the download-and-extract stage
-has not run anywhere). The window-hash convention was checked on local data. Extraction runtime and
-Kaggle disk behaviour are unverified. The branch `thesis-analysis` must be pushed before Kaggle can
-clone it.
+Script `kaggle/cs2cd_followups.py`, spec `kaggle/KAGGLE_SPEC.md`. Private Kaggle CPU session, code
+revision `e3c1e46` (branch `thesis-analysis`), CS2CD pinned revision, frozen split, seed 20261116,
+LightGBM config of `lgbm39_leaves15`. Outputs: `records/kaggle_followups/` (results and full log).
+Integrity: all 141,633 rebuilt windows match the frozen hashes; the rebuilt cache reproduces the saved
+validation scores to 6e-7; **0 test rows scored** [V]. Whole run about 30 minutes.
+
+Blend score, validation / calibration. "Balanced" = weapon-balanced AUC; "outside" = outside scout lobbies.
+
+| Experiment | AUC all | AUC outside | AUC balanced | Recall at 1% FPR outside lobbies (in-sample) |
+|---|---|---|---|---|
+| Frozen blend | 0.943 / 0.941 | 0.925 / 0.957 | 0.787 / 0.861 | 0.15 / 0.24 |
+| **K1** weapon-normalised blend | 0.939 / 0.946 | 0.925 / 0.963 | **0.809 / 0.886** | 0.27 / 0.39 |
+| **K3** footstep channel zeroed | 0.943 / 0.941 | 0.926 / 0.957 | 0.788 / 0.859 | 0.15 / 0.26 |
+| K4 LightGBM baseline (refit) | 0.935 / 0.935 | 0.920 / 0.944 | 0.785 / 0.841 | 0.05 / 0.27 |
+| K4 unreviewed lobbies removed | 0.935 / 0.932 | 0.918 / 0.942 | 0.779 / 0.833 | 0.08 / 0.27 |
+| **K4** weapon-neutral weights + removed | 0.932 / 0.935 | 0.921 / 0.943 | **0.802 / 0.862** | 0.10 / 0.29 |
+
+| K2, LightGBM, five folds each | AUC all | AUC reviewed | AUC outside |
+|---|---|---|---|
+| Random match split | 0.938 (sd 0.017) | 0.935 (0.012) | 0.921 (0.014) |
+| Contiguous-block split, 5-number buffer | 0.936 (0.026) | 0.930 (0.014) | 0.915 (0.035) |
+
+Read against the criteria written in the spec before the run:
+
+- **K1, partly confirmed.** Removing the weapon prior from encounter scores raises weapon-balanced AUC by
+  about 0.02 on both splits without retraining and without hurting the all-player AUC (−0.004 / +0.005).
+  Outside-lobby AUC does not move (0.000 / +0.006), so the criterion "both up by more than 0.01" is not
+  met. Recall at 1% FPR outside lobbies nearly doubles, but that figure is in-sample on 77 and 57
+  cheaters and has no interval; treat it as a lead, not a result. The fitted offsets show how strong the
+  prior is: a legitimate scout encounter starts 3.9 logits above the median encounter, AWP 3.1,
+  auto-sniper 2.8, rifle −0.3.
+- **K2, refuted for this model.** The block split scores 0.003 to 0.006 lower than the random split, far
+  inside the fold-to-fold spread (0.014 to 0.035). Whatever neighbouring matches share, it is not
+  inflating the tabular model's AUC measurably. Not tested: the neural model, and people recurring far
+  apart in the numbering.
+- **K3, confirmed.** Zeroing the footstep channel changes nothing (rank correlation 0.9994, same share of
+  legitimate players above 0.5). The pro result is not an artefact of that missing channel.
+- **K4, weak.** Weights add about 0.02 of weapon-balanced AUC; outside-lobby AUC is unchanged. Removing
+  the suspect lobbies alone does nothing for ranking (their effect is on the threshold, section 4.4).
+
+**What this means for the retraining decision.** The free fix (K1) gives the same gain as the reweighted
+refit (K4), and neither closes the gap: weapon-balanced AUC stays at 0.81 to 0.89 against 0.94 raw. The
+weapon dependence is mostly in who the cheaters in this dataset are, not something reweighting removes.
+My recommendation: do not spend effort on neural retraining with weights now; carry K1 forward as a
+candidate scoring rule to confirm on a fresh cohort; put the effort into independent data (roadmap
+items 1 and 3).
+
+The rebuilt cache (3.0 GB) is kept as the output of the private Kaggle notebook `cs2cd-followups`, so a
+later run can attach it instead of rebuilding.
 
 ### 5.2 Local demos without ground truth
 
@@ -328,7 +373,7 @@ Constraints you gave: deadline more than six months away; 5 to 8 friends can rec
 | # | Decision | You chose | Why (evidence) |
 |---|---|---|---|
 | 1 | Friend data | **Split by person**, fixed before the first session | Person identity explains about 10% of pro score variance after weapon; never splitting a person removes the problem. Friends cannot give a tight FPR (0 of 8 people bounds it only below 31%), so their value is the paired design and the real server pipeline |
-| 2 | Scout imbalance | **Report now; Kaggle spec written; retraining optional** until you have read this report | Section 4.2 and conclusion 2. Step 1 costs nothing and is needed either way |
+| 2 | Scout imbalance | **Report now; retraining optional** until you have read this report. The Kaggle run has since shown reweighting gains about 0.02 (section 5.1), so my advice is not to retrain yet | Section 4.2 and conclusion 2. Step 1 costs nothing and is needed either way |
 | 3 | OpenCS2 pro data | **Split by player, hold-out first** | 0 of 3,260 flags at 0.5; only one scout-main player-map, so no scout fix; `victim_footstep` is always zero in pro windows, a ready-made "pro = legitimate" shortcut if trained on as-is |
 | 4 | Experts vs one model | **One model with weapon-normalised scoring**; experts stay possible with more data | Encounter AUC is 0.71 to 0.84 inside every weapon group already; the problem is label-weapon correlation, which an expert inherits; 78 AWP-main cheaters in training |
 | 5 | Self-made cheating data | **Public data first, then a logged server-side assist** | Only way to get cheat-type and setting labels; no third-party cheat software, so no account, malware or ToS risk; needs supervisor and ethics approval |
@@ -417,6 +462,9 @@ Repository findings are tagged [V] or [I] above; everything from outside is tagg
   would also test the hack-versus-hack reading of the lobbies.
 
 **5. Reweighting, weapon-normalised scoring and cleaned negatives (K1, K4, then optional neural retraining).**
+- Update after the Kaggle run: K1 and K4 each add about 0.02 weapon-balanced AUC and nothing outside
+  lobbies (section 5.1). This item drops to the bottom of the list; only K1, which is free, is worth
+  carrying forward.
 - Problem: section 4.2.
 - Takes: one Kaggle run you launch; a new test cohort (item 1 or the friend hold-out) for any claim.
 - [E] Retraining only the last layer on group-balanced data is reported to match heavier methods for
@@ -460,7 +508,7 @@ Repository findings are tagged [V] or [I] above; everything from outside is tagg
 
 1. Now: roadmap item 2 (reporting), contribution statement, fix the two failing tests, live flag only
    after about 10 encounters (existing proposal D6).
-2. Launch the Kaggle script (K1 to K4); bring back `results.json`; decide on retraining.
+2. Done: Kaggle K1 to K4 (section 5.1). Outcome: no neural retraining for now; keep K1 as a candidate.
 3. Read the XGuardian archive README, approve the download, pre-register, score.
 4. In parallel: supervisor and ethics approval; rewrite the friend protocol for 5 to 8 people and the
    person split; fix the listener defects listed in the journal before any session.
@@ -493,11 +541,11 @@ professional demos at 0.5 and above, and a working real-time pipeline tested aga
 
 - **That scout lobbies are hack-versus-hack matches is an inference** from weapons, cheater counts and
   match numbering. The demos are not local, so I could not look.
-- **Same-person leakage is not measured.** Match-number clustering is indirect evidence; K2 would bound it.
-- **The Kaggle script has not run on CS2CD.** Only the smoke test passed; runtime, disk use and the two
-  integrity gates are untested there. The hash-chain note (survey G11) may matter if file hashes differ
-  on Linux; the script does not depend on those hashes.
-- **Footstep-channel effect on pro scores**: untested (K3).
+- **Same-person leakage is bounded only for the tabular model** (K2: no measurable effect). Whether the
+  same accounts recur is still an inference from match numbering.
+- **K1's recall gain is in-sample and has no interval**; it needs a fresh cohort before it is claimed.
+- **Other source differences in pro demos** (velocity derived from positions) are still untested; only
+  the footstep channel was (K3).
 - **XGuardian**: I read the paper's HTML and two Zenodo pages, not the archive. Tick rate (the paper's
   "7 ticks = 109.375 ms" implies 64 Hz), identity format and whether a subset can be unpacked are
   unknown.

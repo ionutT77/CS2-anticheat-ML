@@ -1,7 +1,8 @@
 # Kaggle spec: CS2CD follow-ups K1 to K4
 
 Script: `cs2cd_followups.py` (usage in its header). Smoke-tested locally on stand-in data
-(`--smoke`, OpenCS2 windows with random labels); **not yet run on CS2CD**.
+(`--smoke`), then **run on Kaggle on 2026-11-16** (CPU, about 30 minutes, revision `e3c1e46`); results in
+`../records/kaggle_followups/` and in section 5.1 of `research/notes/thesis-analysis-report.md`.
 
 | | |
 |---|---|
@@ -11,7 +12,7 @@ Script: `cs2cd_followups.py` (usage in its header). Smoke-tested locally on stan
 | Seed | 20261116 (K2 fold draws); LightGBM `random_state=42`, same config as `lgbm39_leaves15`. |
 | Models | Frozen `tcn39_seed123.pt` and `lgbm39_leaves15.joblib` (K1, K3); LightGBM refits (K2, K4). No neural training. |
 | Outputs | `/kaggle/working/followups/results.json`, `results.txt`; cache in `/kaggle/working/cs2cd_cache`. |
-| Runtime | Unknown for extraction (734 M rows; the original run used 3 workers). K1/K3 minutes on GPU; K2 ten LightGBM fits; K4 three fits. |
+| Runtime | Measured on a Kaggle CPU session: extraction 16 min, K1 + K3 8 min, K2 4 min, K4 2 min. |
 
 Metrics per experiment, on validation and (second look) calibration: AUC on all players, on reviewed
 matches, outside scout lobbies, weapon-balanced; in-sample recall at 1% FPR outside lobbies.

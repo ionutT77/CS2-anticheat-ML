@@ -66,7 +66,7 @@ def fetch(info, f, dest):
             time.sleep(min(2 ** attempt, 30))
 
 
-def build_cache(cache, workers, chunk=12):
+def build_cache(cache, workers, chunk=12, timing=0):
     """Download, extract and delete raw matches a few at a time, then write the transformed cache.
 
     Must run with research/ as the working directory (extract_match writes relative paths)."""
@@ -81,6 +81,8 @@ def build_cache(cache, workers, chunk=12):
     raw = Path('data/cs2cd/raw'); done_dir = Path('data/cs2cd/processed/matches')
     frozen = pd.read_parquet(V1 / 'events.parquet', columns=['npz', 'local_index', 'sha256'])
     todo = [m for m in sorted(by_match) if not (done_dir / (m.replace('/', '_') + '.npz')).exists()]
+    if timing:                               # timing run: a few matches spread over the release, no cache
+        todo = todo[::max(1, len(todo) // timing)][:timing]
     t0 = time.time()
     for i in range(0, len(todo), chunk):
         part = todo[i:i + chunk]
@@ -99,6 +101,10 @@ def build_cache(cache, workers, chunk=12):
             for f in by_match[m]:
                 (raw / f['path']).unlink()
         print(f'extracted {i + len(part)}/{len(todo)} matches; {time.time() - t0:.0f}s', flush=True)
+    if timing:
+        per = (time.time() - t0) / max(len(todo), 1)
+        print(f'TIMING: {len(todo)} matches in {time.time() - t0:.0f}s = {per:.1f}s per match; 795 matches = {per * 795 / 3600:.1f} h; window hashes OK', flush=True)
+        return
     events = pd.read_parquet(V1 / 'events.parquet')
     players = pd.read_csv(V1 / 'player_index.csv')
     cache.mkdir(parents=True, exist_ok=True)
@@ -388,8 +394,11 @@ def main():
     ap.add_argument('--workers', type=int, default=3)
     ap.add_argument('--run', default='all', help='all or comma list of k1,k2,k3,k4')
     ap.add_argument('--smoke', action='store_true')
+    ap.add_argument('--timing', type=int, default=0, help='extract only N matches, print the time, stop')
     a = ap.parse_args()
     cache, out = Path(a.cache), Path(a.out if not a.smoke else 'experiments/thesis_analysis_v1/cache/kaggle_smoke')
+    if a.timing:
+        return build_cache(cache, a.workers, timing=a.timing)
     if a.build_cache:
         build_cache(cache, a.workers)
     import torch

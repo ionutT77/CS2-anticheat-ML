@@ -248,5 +248,244 @@ domain-shift examples only.
 
 ---
 
-*(Sections 5 to 9 follow: experiment records and Kaggle specs, decisions, roadmap, what would earn a
-deployment claim, what could not be checked.)*
+## 5. Experiments run today
+
+All in `research/experiments/thesis_analysis_v1/`; outputs in its `records/` folder. Common record:
+code revision `fb5f39b` + that folder; data `cs2cd_v1` (pinned CS2CD revision `44e5129…`) and the staged
+OpenCS2 sets (`912a363…`); frozen match split; bootstrap 2,000 resamples of whole matches, seed
+20261116; frozen Platt map and thresholds; nothing selected or refitted except the metadata baselines
+(fitted on train). `PREREGISTRATION.md` lists every test-split and pro-set analysis and was written
+before the per-encounter test file and `scout_v1` were touched; Addendum 1 was written after the first
+results and before the lobby analysis.
+
+| Script | What | Splits used | Output |
+|---|---|---|---|
+| `00_gates.py` | Reproduce headline, validation blend, per-encounter file | val, cal, test | console |
+| `01_cs2cd_hypotheses.py` | Source, within-match, weapon post-stratification, strict FPs, thresholds, metadata baselines | val, cal first; test once | `records/01_*.txt`, `.json`, `scored_players.csv` |
+| `02_score_pro.py` | CPU scoring of all staged pro windows, parity check | pro sets | `records/pro_players.csv`, `02_score_pro.log` |
+| `03_events_lobbies.py` | Scout-lobby split, threshold sensitivity (cal to val only), label-noise bounds, per-encounter attribution | val, cal; test once | `records/03_*.txt`, `.json` |
+| `04_pro.py` | Pro flag rates, person effects, re-identification, channel shift | pro sets | `records/04_pro.txt`, `.json`, `pro_channel_shift.csv` |
+| `05_match_index_clustering.py` | Similarity of neighbouring match numbers | labels and weapons only | `records/05_*.txt`, `.json` |
+
+Results are in sections 1, 3 and 4. Numbers not repeated there:
+
+- Metadata baselines (logistic regression, fitted on train): weapon shares 0.880 / 0.846 (validation /
+  calibration); adding log encounter count does not help (0.868 / 0.841).
+- Detector vs metadata on validation + calibration: 0.942 vs 0.858; Spearman correlation 0.69.
+- Components on test: LightGBM 0.9677, TCN alone 0.9607, blend 0.9727. The neural model alone is below
+  the tree.
+- Strict recall by cheaters in the match (test): 0 of 6 with one cheater, 12% with two or three (n = 24),
+  35% with four or more (n = 184).
+
+**Test-split uses added today** (all pre-declared, descriptive, nothing chosen): T1 to T8 and A1 on player
+scores; T4 and T5 on per-encounter scores. **Pro sets:** `awp_v1` second use; `scout_v1` first and only
+use. Neither can be called fresh any more.
+
+### 5.1 Kaggle spec written (not run)
+
+`kaggle/cs2cd_followups.py` and `kaggle/KAGGLE_SPEC.md`: K1 weapon-normalised scoring, K2 blocked-split
+leakage bound, K3 footstep-channel masking, K4 weapon-neutral reweighted LightGBM. It rebuilds the window
+cache by streaming the raw data, checks every window hash against the frozen experiment, never scores
+test rows, and was smoke-tested locally on stand-in data. Extraction runtime and Kaggle disk behaviour
+are unverified.
+
+### 5.2 Local demos without ground truth
+
+Twelve scored runs in `local_runs/` [V]: nobody is flagged at `accuracy` except one player in the
+documented pro match (0.42); the two "cheater demo" runs peak at 0.255 and 0.063. No file records who,
+if anyone, was cheating. Decision: they are pipeline smoke tests and unlabelled examples. They are not
+evidence about recall, and 38 presumed-legitimate matchmaking player-matches are too few and too
+unverified to count toward a false-positive rate. If you know which account was cheating in the two
+FACEIT demos and how you know, write it down with the date; otherwise the folder name `cheaters_demos`
+should not be read as a label.
+
+---
+
+## 6. The five decisions
+
+The prompt says four and lists five; all five were asked and answered on 2026-11-16.
+Constraints you gave: deadline more than six months away; 5 to 8 friends can record.
+
+| # | Decision | You chose | Why (evidence) |
+|---|---|---|---|
+| 1 | Friend data | **Split by person**, fixed before the first session | Person identity explains about 10% of pro score variance after weapon; never splitting a person removes the problem. Friends cannot give a tight FPR (0 of 8 people bounds it only below 31%), so their value is the paired design and the real server pipeline |
+| 2 | Scout imbalance | **Report now; Kaggle spec written; retraining optional** until you have read this report | Section 4.2 and conclusion 2. Step 1 costs nothing and is needed either way |
+| 3 | OpenCS2 pro data | **Split by player, hold-out first** | 0 of 3,260 flags at 0.5; only one scout-main player-map, so no scout fix; `victim_footstep` is always zero in pro windows, a ready-made "pro = legitimate" shortcut if trained on as-is |
+| 4 | Experts vs one model | **One model with weapon-normalised scoring**; experts stay possible with more data | Encounter AUC is 0.71 to 0.84 inside every weapon group already; the problem is label-weapon correlation, which an expert inherits; 78 AWP-main cheaters in training |
+| 5 | Self-made cheating data | **Public data first, then a logged server-side assist** | Only way to get cheat-type and setting labels; no third-party cheat software, so no account, malware or ToS risk; needs supervisor and ethics approval |
+
+**How each is implemented**
+
+1. *Friends.* With 5 to 8 people: order people by a seeded shuffle of sign-up IDs before any recording;
+   the last 2 (of 5 or 6) or 3 (of 7 or 8) are the hold-out, scored once at the end. All of a person's
+   sessions go to their pool. Every person plays both conditions (clean, and assisted once decision 5 is
+   approved), so each is their own control. Report people flagged at least once with exact intervals,
+   and paired differences; do not report rates as if matches were independent. The existing
+   `FRIEND_SESSIONS.md` (12 people, evaluation only) needs a new version saying this; I did not edit it.
+2. *Scout.* Reporting changes are listed in roadmap item 2. The spec is K1 and K4.
+3. *Pros.* `records/pro_person_split.csv`: hashed player ID, pool by parity of the hash. Development 585
+   people / 1,713 player-maps; hold-out 547 / 1,547 (AWP-main 196 / 209). The hold-out is a regression
+   check for every future model (zero flags at 0.5); the development half may enter training only with
+   the footstep channel masked for all sources and a source-shortcut check.
+4. *Experts.* Revisit when a weapon group has roughly 300 cheater player-matches with trustworthy labels
+   and as many clean ones, and an expert beats the shared model on weapon-balanced validation AUC by
+   more than the bootstrap interval. Today no group outside the scout comes close.
+5. *Cheat data.* Design only; nothing was built. I will not help obtain or configure cheat software.
+
+---
+
+## 7. Enhancement roadmap
+
+Ranked by expected effect on (a) detection performance and (b) deployability, per unit of effort.
+Repository findings are tagged [V] or [I] above; everything from outside is tagged [E] here.
+
+**1. Score the frozen model on an independent labelled CS2 cohort (XGuardian).**
+- Problem: unrepresentative positives, reused test set, no independent labels.
+- [E] 2,903 matches from the 5EPlay platform, 5,486 players, 350 cheaters, labels manually re-verified,
+  demo-based, raw demos released; reported FPR 4.1 to 10.1% and recall about 0.89 for their own model
+  ([XGuardian, arXiv 2601.18068](https://arxiv.org/html/2601.18068v1)). Artifacts: one 22 GB archive
+  ([Zenodo 17845614](https://zenodo.org/doi/10.5281/zenodo.17845614), GPL-3.0-or-later) and 13 raw
+  parts, the first 48.3 GB ([Zenodo 17838584](https://zenodo.org/doi/10.5281/zenodo.17838584)).
+- Takes: your approval for the download; reading the archive README first (identity format, tick rate);
+  about 44 s per demo with the existing extractor; a pre-registration (frozen thresholds, primary metric
+  AUC and recall at `accuracy` and strict, intervals by match).
+- Could go wrong: the raw archive is one split stream, so a subset may not unpack alone; demos may not
+  be 64 Hz or may lack properties the extractor needs; identities may not map to the cheater list; the
+  footstep channel will probably be missing; negatives are noisy there too.
+- Worked if: an AUC with a match-cluster interval on at least 100 cheater player-matches. Around 0.85 or
+  above supports generalisation beyond CS2CD; around 0.6 to 0.7 says the CS2CD result is specific to its
+  lobbies. Either result is a thesis finding.
+
+**2. Re-base the reported evaluation and the operating point (no training).**
+- Problem: the strict policy's numbers describe scout lobbies; thresholds below 0.5% FPR are unsupported.
+- Takes: days. Primary table = all / outside lobbies / weapon-balanced / lone-cheater rows with
+  match-cluster intervals; a baseline ladder (weapon shares, LightGBM, blend); drop `fpr_0_1pct`;
+  state the threshold's resampling range; contribution statement; update the stale README and
+  `ARCHITECTURE_CHOICES.md`. For a certified operating point use clean negatives: with the 1,713
+  development pro player-maps, a threshold with zero flags bounds pro FPR below 0.18%. [E] Distribution-
+  free threshold selection with finite-sample guarantees is an established method
+  ([Learn then Test, arXiv 2110.01052](https://arxiv.org/abs/2110.01052)).
+- Could go wrong: nothing technical; the headline gets less impressive.
+- Worked if: every number in the thesis survives the question "is that the lobbies?".
+
+**3. Logged server-side aim assist and a paired friend study (decisions 1 and 5).**
+- Problem: no labels for subtle cheats, weapons or settings; no independent data through the real-time
+  path.
+- Takes: supervisor and ethics approval, consent from each participant; plugin work for an assist mode
+  with exact logs (when active, strength, field of view); 5 to 8 people, clean and assisted sessions at a
+  few settings and weapons. [E] Comparable studies had ethics approval, informed consent, minimal data
+  and controlled cheat execution through a plug-in (summarised from a search; primary papers not read).
+- Could go wrong: a simulated assist is not a commercial cheat; assisted play by non-cheaters is not how
+  cheaters behave; 5 to 8 people give dose-response curves, not rates.
+- Worked if: detection probability rises monotonically with assist strength, and you can state the
+  weakest setting detected at a threshold that flags none of the same people when clean.
+
+**4. Hit-consistency evidence for silent aim and rage cheats.**
+- Problem: silent aim leaves the view angles untouched, so the present aim channels cannot see it [I];
+  it is one of your listed unsolved problems.
+- Idea: for each bullet that hits, the angle between where the player was looking (with recoil) and the
+  victim at the fire tick. Legitimate hits must lie within spread plus the target's angular size. The
+  server knows both. This is a separate, explainable evidence stream scored after the shot, so it needs
+  its own protocol: the current invariant (windows end before the first hit) stays for the existing
+  model.
+- Takes: a feature script on CS2CD raw data (Kaggle) and the same quantity in the plugin; pros as the
+  clean reference.
+- Could go wrong: lag compensation and the one-tick stamp offset the journal found make server-side
+  geometry inexact; hitboxes are approximated; wall penetration.
+- Worked if: the pro distribution has a tight tail and lobby cheaters in CS2CD sit far outside it. That
+  would also test the hack-versus-hack reading of the lobbies.
+
+**5. Reweighting, weapon-normalised scoring and cleaned negatives (K1, K4, then optional neural retraining).**
+- Problem: section 4.2.
+- Takes: one Kaggle run you launch; a new test cohort (item 1 or the friend hold-out) for any claim.
+- [E] Retraining only the last layer on group-balanced data is reported to match heavier methods for
+  spurious correlations ([Kirichenko et al., arXiv 2204.02937](https://arxiv.org/abs/2204.02937)), which
+  is the cheap neural variant if K4 helps.
+- Could go wrong: all-player AUC falls; with noisy scout negatives the weights amplify label errors,
+  which is why the suspect lobbies are removed first.
+- Worked if: weapon-balanced and outside-lobby validation AUC rise and the pro hold-out stays at zero
+  flags at 0.5.
+
+**6. Bunny-hop detection as a small rule-based module.**
+- Problem: an original goal, never started.
+- Idea: per jump, ticks between landing and the next jump; streaks of perfect hops and speed gain. A
+  statistical test against human timing, from plugin data, no learned model at first.
+- [E] I found no peer-reviewed work on this; public sources are community server plugins that compare
+  air speed to ground speed ([example](https://forums.alliedmods.net/showthread.php?p=1260095)).
+- Could go wrong: CS2 movement and input handling differ from older titles; legitimate scroll-wheel
+  jumping produces good timing too; labels would come only from your own sessions.
+- Worked if: scripted hopping on your server is separated from the same people hopping manually.
+
+**Considered and rejected**
+
+- *Image or video based detection.* Needs rendered player views, heavy compute, and is not server-side.
+- *Per-weapon experts now.* Decision 4.
+- *Training on all pro data.* Cannot fix the scout; shortcut risk (section 4.7).
+- *Positive-unlabelled or noise-robust training as the main fix.* The suspect negatives are concentrated
+  in identifiable matches, not spread at random, so removing those matches is simpler and does not need
+  an assumption about how labelled positives were selected [I]; survey:
+  [Bekker and Davis, arXiv 1811.04820](https://arxiv.org/abs/1811.04820).
+- *Later-ban labels on matchmaking demos at scale.* [E] The VAC flag alone had 24.7% recall in the
+  publisher's check, so negatives stay noisy; plus other players' IDs are personal data.
+- *A bigger or different architecture.* Seven architectures are within 0.04 AUC, the blend is not shown
+  to beat LightGBM, and weapon shares alone reach 0.85 to 0.88. Capacity is not the bottleneck; labels
+  and population are.
+- *Wallhack detection from the current windows.* Needs line of sight and map geometry. [E] One published
+  system uses "elimination through occluder" features and still reports FPR above 25% at default
+  settings ([Hawk, arXiv 2409.14830](https://arxiv.org/html/2409.14830v2)).
+- *Masked pretraining on gameplay.* Plausible later; not before the evaluation is fixed.
+
+**Ordered plan**
+
+1. Now: roadmap item 2 (reporting), contribution statement, fix the two failing tests, live flag only
+   after about 10 encounters (existing proposal D6).
+2. Launch the Kaggle script (K1 to K4); bring back `results.json`; decide on retraining.
+3. Read the XGuardian archive README, approve the download, pre-register, score.
+4. In parallel: supervisor and ethics approval; rewrite the friend protocol for 5 to 8 people and the
+   person split; fix the listener defects listed in the journal before any session.
+5. Plugin: hit-consistency and jump logging, then the assist mode; pilot with one person.
+6. Friend sessions, paired; evaluate on the development pool; hold-out once at the end.
+7. Only then: optional neural retraining with weights, final numbers on the cohorts that are still fresh.
+
+---
+
+## 8. What would earn a "validated live" claim
+
+None of this exists yet.
+
+- Data collected independently of training, through the real-time path (plugin capture and live
+  scoring), on a later date and game version.
+- Verified labels for both classes: clean players known to be clean, and positives with known ground
+  truth (controlled assist, or platform bans confirmed by review).
+- Ordinary matches: one or two cheaters among otherwise legitimate players.
+- Thresholds fixed in advance, results reported once.
+- People as the unit. Showing FPR below 1% needs about 300 distinct clean people with no flag; 5 to 8
+  friends cannot do that, whatever the number of matches. A recall estimate within plus or minus 10
+  points needs about 100 positive player-matches.
+
+Until then the accurate description is: an offline benchmark result on CS2CD, a clean bill on
+professional demos at 0.5 and above, and a working real-time pipeline tested against bots.
+
+---
+
+## 9. Not checked, and still uncertain
+
+- **That scout lobbies are hack-versus-hack matches is an inference** from weapons, cheater counts and
+  match numbering. The demos are not local, so I could not look.
+- **Same-person leakage is not measured.** Match-number clustering is indirect evidence; K2 would bound it.
+- **The Kaggle script has not run on CS2CD.** Only the smoke test passed; runtime, disk use and the two
+  integrity gates are untested there. The hash-chain note (survey G11) may matter if file hashes differ
+  on Linux; the script does not depend on those hashes.
+- **Footstep-channel effect on pro scores**: untested (K3).
+- **XGuardian**: I read the paper's HTML and two Zenodo pages, not the archive. Tick rate (the paper's
+  "7 ticks = 109.375 ms" implies 64 Hz), identity format and whether a subset can be unpacked are
+  unknown.
+- **Literature**: claims about VACNet, risk-control details and the ethics of cheat-data studies come
+  from search summaries; I cite only pages I fetched, and for the survey and the two method papers only
+  their abstracts.
+- **Not read**: the plugin source, `realtime/` code, `src/`, notebooks, PDFs, `D:` drive contents.
+  Real-time parity, latency and capacity numbers are the journal's.
+- **Publisher's 97.2% figure**: taken from the paper; whether it is per player or per match is not
+  stated in what I read.
+- **Small cells**: lone-cheater recall (6 to 9 players per split), AWP-main and Deagle-main groups, and
+  everything about 22 strict false positives.

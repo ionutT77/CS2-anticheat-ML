@@ -37,3 +37,20 @@ Weapon groups: `scripts/analyze_weapon_groups.py` `GROUP`; "main group" = group 
   leakage; says nothing about how often the same person recurs in CS2CD).
 
 Identities are hashed (salted SHA-256, 8 hex chars) before anything is written.
+
+## Addendum 1 (2026-11-16, written after 01_cs2cd_hypotheses.py, before 03/04 were run)
+
+Reason: T6 showed that the label-0 players above the strict threshold sit in a few unreviewed matches
+where most players use the scout, and the label table showed 4.1 cheater labels per reviewed match with
+scout share rising with the number of cheaters. Hypothesis: many matches are "sniper lobbies"
+(hack-vs-hack style), in both folders.
+
+- A1 Match-level stratification. A match is a "scout lobby" when at least 3 of its eligible players have
+  the scout as main weapon group (fixed here, not tuned). Counts by folder and label on all splits
+  (labels and weapons only). AUC, strict recall and FPR inside and outside lobbies on
+  validation + calibration, then once on test.
+- A2 Threshold sensitivity, calibration and validation only (test not used): the 1%-FPR threshold
+  re-derived on calibration negatives outside scout lobbies, applied to validation. The frozen threshold
+  is not changed; this only measures how much the strict operating point depends on those matches.
+- A3 Label-noise bounds: arithmetic on the saved confusion counts using the publisher's reported
+  non-cheater label precision. No new look at scores.

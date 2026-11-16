@@ -1,0 +1,16 @@
+
+## no_cheater_present: 477 matches, index range 0-477
+scout-lobby match numbers: [46, 48, 51, 61, 64, 65, 66, 67, 73, 74, 79, 84, 86, 89, 92, 94, 95, 97, 98, 102, 103, 104, 237, 241, 249, 252, 254, 365, 445]
+  neighbour similarity of lobby: observed 0.912, shuffled 0.886, p=0.0002
+  neighbour similarity of cheaters: observed nan, shuffled nan, p=0.0000
+  neighbour similarity of scout_main: observed 0.379, shuffled -0.001, p=0.0000
+  neighbour similarity of map: observed 0.246, shuffled 0.071, p=0.0000
+  held-out lobby matches with a TRAINING lobby match within 5 numbers: 10/14; same for held-out non-lobby matches: 0.14
+
+## with_cheater_present: 317 matches, index range 0-316
+scout-lobby match numbers: [3, 4, 5, 6, 8, 12, 14, 16, 18, 21, 29, 33, 34, 36, 37, 38, 39, 41, 42, 43, 44, 45, 46, 48, 51, 55, 58, 59, 62, 63, 64, 65, 67, 74, 76, 77, 78, 84, 93, 94, 95, 96, 99, 104, 106, 109, 110, 111, 115, 116, 117, 118, 121, 122, 124, 126, 127, 134, 135, 137, 140, 157, 158, 164, 167, 168, 170, 191, 192, 193, 194, 195, 196, 198, 200, 201, 203, 205, 206, 207, 208, 209, 210, 211, 212, 213, 215, 217, 218, 219, 220, 221, 227, 229, 230, 234, 238, 239, 241, 242, 246, 250, 251, 257, 258, 261, 263, 264, 266, 268, 269, 271, 272, 273, 274, 278, 286, 288, 292, 306, 315]
+  neighbour similarity of lobby: observed 0.608, shuffled 0.526, p=0.0016
+  neighbour similarity of cheaters: observed 0.331, shuffled -0.002, p=0.0000
+  neighbour similarity of scout_main: observed 0.279, shuffled -0.003, p=0.0000
+  neighbour similarity of map: observed 0.218, shuffled 0.180, p=0.0364
+  held-out lobby matches with a TRAINING lobby match within 5 numbers: 48/54; same for held-out non-lobby matches: 0.82

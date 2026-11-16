@@ -1,0 +1,56 @@
+{
+ "no_cheater_present": {
+  "lobby": {
+   "observed": 0.912,
+   "shuffled_mean": 0.886,
+   "p": 0.0002
+  },
+  "cheaters": {
+   "observed": NaN,
+   "shuffled_mean": NaN,
+   "p": 0.0
+  },
+  "scout_main": {
+   "observed": 0.379,
+   "shuffled_mean": -0.001,
+   "p": 0.0
+  },
+  "map": {
+   "observed": 0.246,
+   "shuffled_mean": 0.071,
+   "p": 0.0
+  },
+  "heldout_lobby_near_train_lobby": [
+   10,
+   14,
+   0.14204545454545456
+  ]
+ },
+ "with_cheater_present": {
+  "lobby": {
+   "observed": 0.608,
+   "shuffled_mean": 0.526,
+   "p": 0.0016
+  },
+  "cheaters": {
+   "observed": 0.331,
+   "shuffled_mean": -0.002,
+   "p": 0.0
+  },
+  "scout_main": {
+   "observed": 0.279,
+   "shuffled_mean": -0.003,
+   "p": 0.0
+  },
+  "map": {
+   "observed": 0.218,
+   "shuffled_mean": 0.18,
+   "p": 0.0364
+  },
+  "heldout_lobby_near_train_lobby": [
+   48,
+   54,
+   0.821917808219178
+  ]
+ }
+}

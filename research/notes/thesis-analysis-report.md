@@ -21,13 +21,25 @@ Deagle/R8) and the number of cheaters per match are what hack-versus-hack lobbie
 cheater in an otherwise normal match, which is the deployment case, is rare in the data: 47 of 317
 reviewed matches, and 6 to 9 such players per evaluation split [V].
 
-**2. The headline AUC survives every control I could run; the strict operating point does not.**
-AUC stays at 0.94 to 0.97 inside reviewed matches, between players of the same match, outside scout
-lobbies, and with all sniper encounters removed from the neural component [V]. But strict-threshold
-recall (the reported 31%) is 46% inside scout lobbies and **11% outside them** on test (35% and 9% on
-validation + calibration) [V]. For a cheater who is alone in their match it is 0 of 6 on test and 0 of 7
-on calibration [V]. The strict policy is, in practice, a scout-lobby detector. The number that describes
-ordinary matches is "about 10% recall at the strict threshold", not 31%.
+**2. The headline is weaker than reported: part of the AUC is weapon choice, and the strict operating
+point is mostly a scout-lobby detector.** Validation + calibration first, test as replication [V]:
+
+| | Validation + calibration | Test |
+|---|---|---|
+| AUC as reported | 0.942 | 0.973 |
+| AUC if legitimate players had the cheaters' weapon mix | **0.825** [0.78, 0.87] | 0.904 [0.87, 0.94] |
+| AUC among scout-main players | 0.74 | 0.85 |
+| AUC outside scout lobbies, matches with at most 3 cheater labels | 0.887 [0.80, 0.95] | 0.963 [0.94, 0.98] |
+| Weapon shares alone, no aim data | 0.85 to 0.88 | 0.874 (journal) |
+| Strict recall, all | 24% | 31% |
+| Strict recall inside / **outside** scout lobbies | 35% / **9%** | 46% / **11%** |
+| Strict recall, cheater alone in the match | 2 of 9 and 0 of 7 | 0 of 6 |
+
+What does hold: the model separates cheater-labelled from other players inside the same match (AUC 0.94
+to 0.97), inside reviewed matches (0.95 to 0.97) and outside scout lobbies (0.94 to 0.97), and the neural
+component keeps AUC 0.94 with all sniper encounters removed. So there is a real aim signal beyond folder
+and weapon. But roughly 0.07 to 0.12 of AUC is weapon mix, and the number that describes ordinary matches
+is "about 10% recall at the strict threshold", not 31%.
 
 **3. Every strict "false positive" in every split is in the unreviewed folder, in a scout-heavy match,
 and those matches are bunched together in the publisher's numbering.** 22 label-0 players are above the
@@ -59,22 +71,23 @@ blatant sniper-lobby cheating, untested on subtle cheats and on independent labe
 |---|---|
 | Headline numbers | Reproduced from saved predictions: test AUC 0.9727; strict 67 TP / 4 FP at 0.8528; validation blend 0.9425 / 0.9496; calibration strict 20 TP / 6 FP of 625 [V] (`00_gates.py`) |
 | Artifact chain | `verify_artifacts.py`: 41 files and the selection/calibration chain verify [V] |
-| Tests | 252 pass, 2 fail (`test_private_scoring.py`, `KeyError: 'steamid'`), as the journal says. The survey's count of 132 test functions is consistent once parametrised cases are counted [V] |
+| Tests | 252 pass, 2 fail (`test_private_scoring.py`, `KeyError: 'steamid'`), as the journal says. 254 tests collected [V] |
 | CPU re-scoring parity | Re-scoring `awp_v1` on this machine reproduces `local_runs/opencs2_pro_fpr_scores.csv` to 3e-8 on all 1,170 rows [V] (`02_score_pro.py`) |
 | Per-encounter file | `tcn39_seed123_test_events.npz` holds probabilities, not logits; the mean of their logits rebuilds the player column to 4e-4 [V] |
 
 **Where the survey note or the documents were wrong or incomplete**
 
-- The survey says the 39-channel window cache is not hosted; `data/cs2cd/metadata/windows_repo.json`
-  points to the publisher's own 256-tick windows (`CS2CD/Context_window_256`, 9.4 GB), which is a
-  different product (kill-centred, includes 32 ticks after the kill) and is not used by any script [V].
+- The survey is right that the project's 39-channel window cache is not hosted. For completeness:
+  `data/cs2cd/metadata/windows_repo.json` points to the publisher's own 256-tick windows
+  (`CS2CD/Context_window_256`, 9.4 GB), downloadable with `download_cs2cd.py --kind windows` [V]. [E]
+  Those are kill-centred and include 32 ticks after the kill, so they cannot replace the cache.
 - The survey says three of the four strict test false positives are in one match. Correct, and the same
   pattern holds on calibration and validation, which no document says (section 4.3) [V].
 - The survey and journal treat OpenCS2 pro windows as "staged tables"; the full raw windows of 326 pro
   maps (74,045 encounters, with stable player identities) are on disk, so the frozen model can be run
   on them locally [V].
-- `PLAN.md` describes `scout_v1` as never scored. It has now been scored once (section 5.4) and is no
-  longer a fresh cohort.
+- `scout_v1` had not been scored before today (no saved scores exist for it [V]). It has now been
+  scored once (section 4.7) and is no longer a fresh cohort.
 - `METHODS.md` says the reviewed cohort supports "a signal beyond source membership". True, but it does
   not mention that weapon choice alone reaches AUC 0.85 to 0.88, including inside reviewed matches [V].
 
@@ -126,7 +139,8 @@ All from labels, weapons and match numbers; no model scores involved [V] (`01`, 
 - Weapon shares alone (logistic regression fitted on train): AUC 0.880 validation, 0.846 calibration;
   0.883 / 0.857 inside reviewed matches. Detector: 0.943 / 0.941 [V].
 - If legitimate players had the same main-weapon mix as cheaters (post-stratification), AUC falls from
-  0.942 to 0.825 on validation + calibration (0.973 to 0.904 on test); strict recall from 24% to 10%
+  0.942 to 0.825 [0.78, 0.87] on validation + calibration (0.973 to 0.904 [0.87, 0.94] on test; by split
+  0.79, 0.86, 0.90, so the size of the drop is itself uncertain; `06_weapon_balanced_ci.py`); strict recall from 24% to 10%
   (31% to 13% on test); strict FPR rises from 1.2% to 2.6% (0.44% to 1.5%) [V].
 - Scout-main players: AUC 0.74 (validation + calibration), 0.85 (test); strict false positives 16 of 93
   and 4 of 36 legitimate scout-main players [V].
@@ -149,7 +163,7 @@ All from labels, weapons and match numbers; no model scores involved [V] (`01`, 
 - Three readings: (a) unlabelled cheaters in hack-versus-hack lobbies nobody was banned in; (b) a
   legitimate scout-only community mode; (c) a real model failure on scout play. (a) fits the
   match-number clustering and the publisher's own 2.8% estimate; (c) is partly true as well, because pro
-  scout users also score higher (section 5.4), but no pro reaches 0.5. I cannot separate (a) from (b)
+  scout users also score higher (section 4.7), but no pro reaches 0.5. I cannot separate (a) from (b)
   without the demos. [I]
 
 ### 4.4 Thresholds: nothing below about 0.5% FPR is resolvable, and the strict threshold is unstable. Confidence high.
@@ -175,9 +189,10 @@ All from labels, weapons and match numbers; no model scores involved [V] (`01`, 
   accounts on both sides, most of all the lobby players [I].
 - Mechanism check on professionals, where identity is known: once the main weapon is accounted for, the
   person explains about 10% of score variance (ICC 0.10; 0.54 before, of which weapon role is nearly
-  all); a player is re-identified across series from the window summaries 0.8% of the time (chance 0.1%)
-  [V]. So for legitimate play, "style" is mostly weapon role, not a personal fingerprint. This says
-  nothing about cheaters, whose "style" is their cheat configuration.
+  all); a simple nearest-neighbour search on the window summaries re-identifies a player across series 0.8%
+  of the time (chance 0.1%) [V]. That search is crude, so it is a lower bound on how identifiable people
+  are. What it supports: for legitimate play the *score* follows weapon role much more than the person.
+  It says nothing about cheaters, whose "style" is their cheat configuration.
 - Mouse-sensitivity step as an account linker: stable for 62% of professionals across maps and shared by
   a median of 22 people, so too weak alone [V].
 - How to bound it: a split by contiguous blocks of match numbers (Kaggle spec K2). If AUC drops under the
@@ -223,14 +238,15 @@ close to these. 32 of 1,132 people are flagged at least once at `accuracy`.
 
 ### 4.8 Local demos without ground truth
 
-See section 5.5. They cannot measure recall or FPR. Use: pipeline smoke tests and unlabelled
+See section 5.2. They cannot measure recall or FPR. Use: pipeline smoke tests and unlabelled
 domain-shift examples only.
 
 ### 4.9 Problems not on the list
 
 - **The positive class is not representative** (section 1, conclusion 1). This is the largest threat to
   the thesis claim and is not in any document.
-- **Lone-cheater recall is unmeasured for practical purposes**: 6 to 9 players per split.
+- **Lone-cheater recall is unmeasured for practical purposes**: 6 to 9 players per split (strict
+  flags 2 of 9, 0 of 7, 0 of 6).
 - **The blend is not shown to beat LightGBM alone** (difference 0.005, interval includes 0, already in
   `METHODS.md`), and weapon shares alone reach 0.85 to 0.88. The honest baseline table for the thesis is:
   weapon shares 0.85 to 0.88, source 0.88, LightGBM 0.968 (test), blend 0.973.
@@ -266,6 +282,7 @@ results and before the lobby analysis.
 | `03_events_lobbies.py` | Scout-lobby split, threshold sensitivity (cal to val only), label-noise bounds, per-encounter attribution | val, cal; test once | `records/03_*.txt`, `.json` |
 | `04_pro.py` | Pro flag rates, person effects, re-identification, channel shift | pro sets | `records/04_pro.txt`, `.json`, `pro_channel_shift.csv` |
 | `05_match_index_clustering.py` | Similarity of neighbouring match numbers | labels and weapons only | `records/05_*.txt`, `.json` |
+| `06_weapon_balanced_ci.py` | Match-cluster intervals for the weapon-balanced AUC (500 resamples) | val, cal, test | `records/06_*.txt`, `.json` |
 
 Results are in sections 1, 3 and 4. Numbers not repeated there:
 
@@ -286,8 +303,10 @@ use. Neither can be called fresh any more.
 `kaggle/cs2cd_followups.py` and `kaggle/KAGGLE_SPEC.md`: K1 weapon-normalised scoring, K2 blocked-split
 leakage bound, K3 footstep-channel masking, K4 weapon-neutral reweighted LightGBM. It rebuilds the window
 cache by streaming the raw data, checks every window hash against the frozen experiment, never scores
-test rows, and was smoke-tested locally on stand-in data. Extraction runtime and Kaggle disk behaviour
-are unverified.
+test rows, and was smoke-tested locally on stand-in data (K1 to K4 only; the download-and-extract stage
+has not run anywhere). The window-hash convention was checked on local data. Extraction runtime and
+Kaggle disk behaviour are unverified. The branch `thesis-analysis` must be pushed before Kaggle can
+clone it.
 
 ### 5.2 Local demos without ground truth
 
@@ -374,8 +393,9 @@ Repository findings are tagged [V] or [I] above; everything from outside is tagg
   path.
 - Takes: supervisor and ethics approval, consent from each participant; plugin work for an assist mode
   with exact logs (when active, strength, field of view); 5 to 8 people, clean and assisted sessions at a
-  few settings and weapons. [E] Comparable studies had ethics approval, informed consent, minimal data
-  and controlled cheat execution through a plug-in (summarised from a search; primary papers not read).
+  few settings and weapons. Published aimbot studies have collected their own player data, for example
+  [E] [GAN-Aimbots, arXiv 2205.07060](https://arxiv.org/abs/2205.07060) (abstract read only; it does not
+  describe ethics or consent, so take your requirements from your supervisor, not from the literature).
 - Could go wrong: a simulated assist is not a commercial cheat; assisted play by non-cheaters is not how
   cheaters behave; 5 to 8 people give dose-response curves, not rates.
 - Worked if: detection probability rises monotonically with assist strength, and you can state the
@@ -411,8 +431,8 @@ Repository findings are tagged [V] or [I] above; everything from outside is tagg
 - Problem: an original goal, never started.
 - Idea: per jump, ticks between landing and the next jump; streaks of perfect hops and speed gain. A
   statistical test against human timing, from plugin data, no learned model at first.
-- [E] I found no peer-reviewed work on this; public sources are community server plugins that compare
-  air speed to ground speed ([example](https://forums.alliedmods.net/showthread.php?p=1260095)).
+- I found no peer-reviewed work on this in one search; the results were community server plugins, which
+  I could not open, so there is no source to cite.
 - Could go wrong: CS2 movement and input handling differ from older titles; legitimate scroll-wheel
   jumping produces good timing too; labels would come only from your own sessions.
 - Worked if: scripted hopping on your server is separated from the same people hopping manually.

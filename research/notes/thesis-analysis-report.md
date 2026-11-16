@@ -49,7 +49,8 @@ scout lobbies are numbered 46 to 104 [V]. The most likely reading is unlabelled 
 collected from the same accounts' match histories [I]. Two consequences: the six calibration negatives
 that set the strict threshold are in three such matches, so the threshold itself rests on probable label
 errors; and the same accounts probably recur across train, validation, calibration and test, which the
-match split cannot prevent.
+match split cannot prevent. A follow-up run on Kaggle found that this recurrence does not measurably inflate
+the tabular model's AUC (section 5.1, K2).
 
 **4. On 1,132 professional players (3,260 player-maps) the frozen model raises no flag at 0.5 or at the
 strict threshold** (highest score 0.496) [V]. Lenient flags are confined to AWP and scout users (8% of
